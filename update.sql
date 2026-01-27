@@ -1,0 +1,1 @@
+UPDATE "Computer" SET status = 'AVAILABLE' WHERE id = 'f1fbdb02-4f12-47c4-9163-11898214764f';

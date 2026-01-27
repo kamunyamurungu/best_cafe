@@ -1,0 +1,1 @@
+INSERT INTO "Organization" (id, name) VALUES ('default-org', 'Default Organization') ON CONFLICT (id) DO NOTHING;

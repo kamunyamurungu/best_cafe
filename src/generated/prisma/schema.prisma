@@ -1,0 +1,152 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider   = "prisma-client-js"
+  output     = "../src/generated/prisma"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  cyberCenters CyberCenter[]
+}
+
+model CyberCenter {
+  id             String       @id @default(cuid())
+  name           String
+  location       String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  computers Computer[]
+  sessions  Session[]
+  users     User[]
+
+  createdAt DateTime @default(now())
+}
+
+model Computer {
+  id            String         @id @default(uuid())
+  name          String
+  deviceToken   String         @unique
+  status        ComputerStatus
+  lastSeenAt    DateTime?
+  cyberCenterId String?
+  cyberCenter   CyberCenter?   @relation(fields: [cyberCenterId], references: [id])
+  createdAt     DateTime       @default(now())
+
+  sessions Session[]
+  events   Event[]
+  commands Command[]
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  computerId String
+  computer   Computer @relation(fields: [computerId], references: [id])
+
+  cyberCenterId String?
+  cyberCenter   CyberCenter? @relation(fields: [cyberCenterId], references: [id])
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  startedAt DateTime?
+  endedAt   DateTime?
+  status    SessionStatus
+
+  pricePerMinute Int
+  totalCost      Int?
+
+  createdAt DateTime @default(now())
+}
+
+model Pricing {
+  id             String   @id @default(uuid())
+  pricePerMinute Int
+  active         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  passwordHash  String
+  role          UserRole
+  balance       Int          @default(0) // Balance in cents
+  cyberCenterId String?
+  cyberCenter   CyberCenter? @relation(fields: [cyberCenterId], references: [id])
+  createdAt     DateTime     @default(now())
+
+  events   Event[]
+  sessions Session[]
+}
+
+model Event {
+  id        String    @id @default(uuid())
+  type      EventType
+  payload   Json?
+  createdAt DateTime  @default(now())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  computerId String?
+  computer   Computer? @relation(fields: [computerId], references: [id])
+}
+
+model Command {
+  id         String    @id @default(cuid())
+  computerId String
+  computer   Computer  @relation(fields: [computerId], references: [id])
+  type       String
+  status     String    @default("PENDING")
+  createdAt  DateTime  @default(now())
+  sentAt     DateTime?
+  ackedAt    DateTime?
+}
+
+enum ComputerStatus {
+  AVAILABLE
+  IN_USE
+  LOCKED
+  OFFLINE
+  ERROR
+}
+
+enum SessionStatus {
+  CREATED
+  ACTIVE
+  ENDED
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+  USER
+}
+
+enum EventType {
+  COMPUTER_CONNECTED
+  COMPUTER_DISCONNECTED
+  COMPUTER_STATUS_CHANGED
+  SESSION_STARTED
+  SESSION_ACTIVATED
+  SESSION_ENDED
+  USER_LOGIN
+  USER_LOGOUT
+  COMMAND_CREATED
+  COMMAND_SENT
+  COMMAND_ACKED
+}
