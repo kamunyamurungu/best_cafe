@@ -25,19 +25,17 @@ export class SocketsGateway {
 
   @SubscribeMessage('hello')
   async handleHello(
-    @MessageBody() data: { deviceToken: string; name?: string },
+    @MessageBody() data: { name: string },
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const computer = await this.computersService.registerComputer(
-        data.deviceToken,
-        data.name,
-      );
+      if (!data.name) throw new Error('Computer name is required');
+      const computer = await this.computersService.registerComputer(data.name);
 
       // Store computer ID in socket for later use
       client.data.computerId = computer.id;
 
-      client.emit('auth_ok', { computerId: computer.id });
+      client.emit('auth_ok', { computerId: computer.id, deviceToken: computer.deviceToken });
     } catch (error) {
       client.emit('error', { message: error.message });
     }

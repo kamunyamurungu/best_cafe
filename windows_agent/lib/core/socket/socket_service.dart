@@ -1,13 +1,19 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter/foundation.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:async';
+import 'dart:ui';
 import '../config/config.dart';
 import '../state/agent_state.dart';
+import '../log/logger.dart';
 
 class SocketService {
   late io.Socket socket;
   final AgentStateNotifier stateNotifier;
   String? computerId;
+  Timer? _heartbeatTimer;
 
   SocketService(this.stateNotifier);
 
@@ -18,18 +24,21 @@ class SocketService {
       'autoConnect': false,
     });
 
-    socket.onConnect((_) {
+    socket.onConnect((_) async {
       if (kDebugMode) {
         print('Connected to server');
       }
+      await Logger.log('Socket connected');
       stateNotifier.setState(AgentState.connected);
-      _authenticate();
+      await _authenticate();
     });
 
     socket.onDisconnect((_) {
       if (kDebugMode) {
         print('Disconnected from server');
       }
+       Logger.log('Socket disconnected');
+      _heartbeatTimer?.cancel();
       stateNotifier.setState(AgentState.disconnected);
     });
 
@@ -37,11 +46,17 @@ class SocketService {
       _handleCommand(data);
     });
 
-    socket.on('auth_ok', (data) {
+    socket.on('auth_ok', (data) async {
       if (kDebugMode) {
         print('Authenticated');
+        print('Computer ID: ${data['computerId']}');
       }
+      await Logger.log('Auth OK: ${data}');
       computerId = data['computerId'];
+      final token = data['deviceToken'];
+      await Config.setDeviceToken(token);
+      await _fetchSession();
+      _startHeartbeat();
     });
 
     socket.on('error', (data) {
@@ -54,12 +69,60 @@ class SocketService {
     socket.connect();
   }
 
-  void _authenticate() {
-    socket.emit('hello', {'deviceToken': Config.deviceToken});
+  Future<void> _authenticate() async {
+    final name = Config.computerName;
+    await Logger.log('Sending hello for computer: $name');
+    socket.emit('hello', {'name': name});
   }
 
-  void sendHeartbeat() {
-    socket.emit('heartbeat', {'deviceToken': Config.deviceToken});
+  Future<void> _fetchSession() async {
+    if (computerId != null) {
+      try {
+        final url = '${await Config.serverUrl}/sessions/active/$computerId';
+        if (kDebugMode) print('Fetching session from: $url');
+        await Logger.log('Fetching session from: $url');
+        final response = await http.get(
+          Uri.parse(url),
+        );
+        if (kDebugMode) print('Session response: ${response.statusCode} ${response.body}');
+        await Logger.log('Session response: ${response.statusCode} bodyLength=${response.body.length}');
+        if (response.statusCode == 200) {
+          final body = response.body.trim();
+          if (body.isEmpty || body == 'null') {
+            stateNotifier.setState(AgentState.locked);
+          } else {
+            Map<String, dynamic> session;
+            try {
+              session = jsonDecode(body);
+            } catch (e) {
+              await Logger.log('JSON decode error: $e');
+              stateNotifier.setState(AgentState.locked);
+              return;
+            }
+            if (session != null && session['startedAt'] != null) {
+              stateNotifier.setState(AgentState.unlocked);
+            } else {
+              stateNotifier.setState(AgentState.locked);
+            }
+          }
+        } else {
+          stateNotifier.setState(AgentState.locked);
+        }
+      } catch (e) {
+        if (kDebugMode) print('Error fetching session: $e');
+        await Logger.log('Error fetching session: $e');
+        stateNotifier.setState(AgentState.locked);
+      }
+    } else {
+      if (kDebugMode) print('Computer ID is null');
+      await Logger.log('Computer ID is null during _fetchSession');
+      stateNotifier.setState(AgentState.locked);
+    }
+  }
+
+  void sendHeartbeat() async {
+    final token = await Config.deviceToken;
+    socket.emit('heartbeat', {'deviceToken': token});
   }
 
   void _handleCommand(Map<String, dynamic> data) {
@@ -79,21 +142,56 @@ class SocketService {
   }
 
   void _lockComputer() async {
-    await windowManager.setFullScreen(true);
-    await windowManager.setAlwaysOnTop(true);
-    await windowManager.setSkipTaskbar(true);
+    if (!kDebugMode) {
+      await windowManager.waitUntilReadyToShow(
+        const WindowOptions(
+          fullScreen: true,
+          alwaysOnTop: true,
+          skipTaskbar: false,
+        ),
+        () async {
+          await windowManager.setClosable(false);
+          await windowManager.show();
+          await windowManager.focus();
+        },
+      );
+    }
     stateNotifier.setState(AgentState.locked);
   }
 
   void _unlockComputer() async {
-    await windowManager.setFullScreen(false);
-    await windowManager.setAlwaysOnTop(false);
-    await windowManager.setSkipTaskbar(false);
+    if (!kDebugMode) {
+      await windowManager.waitUntilReadyToShow(
+        const WindowOptions(
+          size: Size(320, 80),
+          alwaysOnTop: true,
+          skipTaskbar: false,
+          fullScreen: false,
+        ),
+        () async {
+          await windowManager.setPosition(const Offset(20, 20));
+          await windowManager.setClosable(false);
+          await windowManager.show();
+          await windowManager.focus();
+        },
+      );
+    }
     stateNotifier.setState(AgentState.unlocked);
   }
 
-  void reconnect() {
-    socket.emit('reconnect', {'deviceToken': Config.deviceToken});
+  void reconnect() async {
+    final token = await Config.deviceToken;
+    socket.emit('reconnect', {'deviceToken': token});
+  }
+
+  void _startHeartbeat() async {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 20), (_) async {
+      try {
+        await Logger.log('Sending heartbeat');
+        sendHeartbeat();
+      } catch (_) {}
+    });
   }
 
   void sendAdminUnlock(String password) {

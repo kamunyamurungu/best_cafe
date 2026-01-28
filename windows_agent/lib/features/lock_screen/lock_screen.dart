@@ -3,8 +3,10 @@ import 'package:window_manager/window_manager.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
 import '../../core/config/config.dart';
 import '../../core/socket/socket_service.dart';
+import '../../core/state/session_summary.dart';
 
 class LockScreen extends StatefulWidget {
   const LockScreen({super.key});
@@ -15,12 +17,14 @@ class LockScreen extends StatefulWidget {
 
 class _LockScreenState extends State<LockScreen> with WindowListener {
   late SocketService _socketService;
+  SessionSummary? _lastSummary;
   @override
   void initState() {
     super.initState();
     windowManager.addListener(this);
     _socketService = Provider.of<SocketService>(context, listen: false);
     _makeFullscreen();
+    _loadSummary();
   }
 
   @override
@@ -30,9 +34,32 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
   }
 
   void _makeFullscreen() async {
-    await windowManager.setFullScreen(true);
-    await windowManager.setAlwaysOnTop(true);
-    await windowManager.setSkipTaskbar(true);
+    if (!kDebugMode) {
+      await windowManager.waitUntilReadyToShow(
+        const WindowOptions(
+          fullScreen: true,
+          alwaysOnTop: true,
+          skipTaskbar: false,
+        ),
+        () async {
+          await windowManager.setClosable(false);
+          await windowManager.setMinimizable(false);
+          await windowManager.setMaximizable(false);
+          await windowManager.setResizable(false);
+          await windowManager.show();
+          await windowManager.focus();
+        },
+      );
+    }
+  }
+
+  Future<void> _loadSummary() async {
+    final summary = await SessionSummaryStore.load();
+    if (mounted) {
+      setState(() {
+        _lastSummary = summary;
+      });
+    }
   }
 
   @override
@@ -80,6 +107,19 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
               onPressed: _startPayPerUseSession,
               child: const Text('Start Pay Per Use Session'),
             ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _configureServer,
+              child: const Text('Configure Server'),
+            ),
+            const SizedBox(height: 20),
+            if (_lastSummary != null) ...[
+              Text(
+                'You used the computer for ${_lastSummary!.minutes} minutes, pay \$${_lastSummary!.cost.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 20, color: Colors.white70),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
         ),
       ),
@@ -144,8 +184,9 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
           TextButton(
             onPressed: () async {
               try {
+                final serverUrl = await Config.serverUrl;
                 final response = await http.post(
-                  Uri.parse('${Config.serverUrl}/auth/login'),
+                  Uri.parse('$serverUrl/auth/login'),
                   headers: {'Content-Type': 'application/json'},
                   body: jsonEncode({
                     'email': emailController.text,
@@ -161,7 +202,7 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
                   if (balance > 0) {
                     // Auto start session
                     final startResponse = await http.post(
-                      Uri.parse('${Config.serverUrl}/sessions'),
+                      Uri.parse('$serverUrl/sessions'),
                       headers: {'Content-Type': 'application/json'},
                       body: jsonEncode({
                         'computerId': _socketService.computerId,
@@ -229,8 +270,9 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
           TextButton(
             onPressed: () async {
               try {
+                final serverUrl = await Config.serverUrl;
                 final response = await http.post(
-                  Uri.parse('${Config.serverUrl}/auth/register'),
+                  Uri.parse('$serverUrl/auth/register'),
                   headers: {'Content-Type': 'application/json'},
                   body: jsonEncode({
                     'email': emailController.text,
@@ -262,8 +304,9 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
 
   void _startPayPerUseSession() async {
     try {
+      final serverUrl = await Config.serverUrl;
       final response = await http.post(
-        Uri.parse('${Config.serverUrl}/sessions'),
+        Uri.parse('$serverUrl/sessions'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'computerId': _socketService.computerId,
@@ -284,6 +327,36 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
         SnackBar(content: Text('Error: $e')),
       );
     }
+  }
+
+  void _configureServer() {
+    final TextEditingController urlController = TextEditingController(text: 'http://192.168.100.70:3000');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Configure Server URL'),
+        content: TextField(
+          controller: urlController,
+          decoration: const InputDecoration(labelText: 'Server URL'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await Config.setServerUrl(urlController.text);
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Server URL updated. Please restart the app.')),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

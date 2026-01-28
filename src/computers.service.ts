@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/commo
 import { PrismaService } from './prisma.service';
 import { ComputerStatus } from './generated/prisma';
 import { SocketsGateway } from './sockets.gateway';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ComputersService {
@@ -11,27 +12,36 @@ export class ComputersService {
     private socketsGateway: SocketsGateway,
   ) {}
 
-  async registerComputer(deviceToken: string, name?: string) {
-    const computer = await this.prisma.computer.upsert({
-      where: { deviceToken },
-      update: {
-        lastSeenAt: new Date(),
-        status: ComputerStatus.AVAILABLE,
-      },
-      create: {
-        deviceToken,
-        name: name || `Computer-${deviceToken.slice(0, 8)}`,
-        status: ComputerStatus.AVAILABLE,
-        lastSeenAt: new Date(),
-      },
-    });
+  async registerComputer(name: string) {
+    let computer = await this.prisma.computer.findFirst({ where: { name } });
+
+    if (computer) {
+      // Update last seen and status
+      computer = await this.prisma.computer.update({
+        where: { id: computer.id },
+        data: {
+          lastSeenAt: new Date(),
+          status: ComputerStatus.AVAILABLE,
+        },
+      });
+    } else {
+      const deviceToken = uuidv4();
+      computer = await this.prisma.computer.create({
+        data: {
+          deviceToken,
+          name,
+          status: ComputerStatus.AVAILABLE,
+          lastSeenAt: new Date(),
+        },
+      });
+    }
 
     // Log event
     await this.prisma.event.create({
       data: {
         type: 'COMPUTER_CONNECTED',
         computerId: computer.id,
-        payload: { deviceToken },
+        payload: { deviceToken: computer.deviceToken },
       },
     });
 

@@ -38,6 +38,15 @@ dependencies:
   # WebSocket client
   socket_io_client: ^2.0.3+1
 
+  # For Windows system info and APIs
+  win32: ^5.15.0
+
+  # For UUID generation
+  uuid: ^4.3.3
+
+  # For advanced window control
+  bitsdojo_window: ^0.1.6
+
   # State management
   provider: ^6.1.2
 
