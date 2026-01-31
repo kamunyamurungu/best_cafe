@@ -61,6 +61,34 @@ $ npm run test:cov
 ```
 
 ## Deployment
+### PM2 (Windows) Deployment
+
+This project includes an ecosystem configuration in [ecosystem.config.js](ecosystem.config.js) that starts the backend at `dist/src/main.js` under the PM2 process name `cyber-backend`.
+
+Use the provided script to deploy updates to the existing PM2 Administrator service:
+
+1. Open PowerShell as Administrator.
+2. Run the deploy script from the project root:
+
+```powershell
+Set-Location "C:\Users\kelly\Desktop\Kelly\APP\best_cafe"
+PowerShell -ExecutionPolicy Bypass -File scripts\deploy_pm2.ps1
+```
+
+Optional overrides:
+
+```powershell
+PowerShell -ExecutionPolicy Bypass -File scripts\deploy_pm2.ps1 -Port 3000 -Host "0.0.0.0"
+```
+
+The script performs:
+- `npm ci` or `npm install`
+- `npx prisma generate` and `npx prisma migrate deploy`
+- `npm run build`
+- `pm2 start ecosystem.config.js --only cyber-backend --update-env`
+- `pm2 reload cyber-backend` and `pm2 save`
+
+If PM2 shows permission errors (EPERM), ensure you’re in an elevated shell and controlling the same PM2 home as the Administrator service.
 ## Local Development with Admin Dashboard & Agent
 
 To run the dev backend alongside a production service using port 3000, start the dev server on a different port and point clients to it:
