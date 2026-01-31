@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/computers/computers_screen.dart';
 import 'features/sessions/sessions_screen.dart';
 import 'features/reports/reports_screen.dart';
 import 'features/settings/settings_screen.dart';
-import 'core/providers.dart';
 import 'core/socket_service.dart';
+import 'core/api_service.dart';
+import 'core/bloc/computers_bloc.dart';
+import 'core/bloc/sessions_bloc.dart';
 
 void main() {
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -21,17 +24,53 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late AdminSocketService _socketService;
+  late final ApiService _api;
 
   @override
   void initState() {
     super.initState();
-    // Initialize socket service after providers are set up
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final container = ProviderScope.containerOf(context);
-      _socketService = container.read(socketServiceProvider);
-      _socketService.connect();
-    });
+    _api = ApiService();
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => ComputersBloc(_api)..add(const ComputersRequested())),
+        BlocProvider(create: (ctx) => SessionsBloc(api: _api, computers: ctx.read<ComputersBloc>())..add(const SessionsRequested())),
+      ],
+      child: Builder(
+        builder: (context) {
+          _socketService = AdminSocketService(
+            onComputerStatusChange: (id, status, data) => context.read<ComputersBloc>().add(ComputerStatusChanged(id, status)),
+            onSessionUpdated: (data) => context.read<SessionsBloc>().add(SessionUpdateApplied(data)),
+            onComputerCommand: (id, command, data) {
+              // Keep pending command for audit, but also react to UNLOCK immediately
+              context.read<ComputersBloc>().add(ComputerPendingCommandSet(id, command));
+              if (command.toUpperCase() == 'UNLOCK') {
+                context.read<ComputersBloc>().add(ComputerUnlockCommandReceived(id));
+              }
+            },
+          );
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _socketService.connect();
+          });
+
+          return const ProviderScope(child: _AppShell());
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _socketService.disconnect();
+    super.dispose();
+  }
+}
+
+class _AppShell extends StatelessWidget {
+  const _AppShell();
 
   @override
   Widget build(BuildContext context) {
@@ -43,12 +82,6 @@ class _MyAppState extends State<MyApp> {
       ),
       home: const AdminHome(),
     );
-  }
-
-  @override
-  void dispose() {
-    _socketService.disconnect();
-    super.dispose();
   }
 }
 

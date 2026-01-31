@@ -41,6 +41,16 @@ export class SessionsController {
     return { updatedSession: result.updatedSession, totalCost: result.totalCost };
   }
 
+  @Patch(':id/pause')
+  async pauseSession(@Param('id') sessionId: string) {
+    return this.sessionsService.pauseSession(sessionId);
+  }
+
+  @Patch(':id/resume')
+  async resumeSession(@Param('id') sessionId: string) {
+    return this.sessionsService.resumeSession(sessionId);
+  }
+
   @Post(':id/cost')
   async calculateCost(@Param('id') sessionId: string) {
     return this.sessionsService.calculateCost(sessionId);

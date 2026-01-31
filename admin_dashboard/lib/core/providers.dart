@@ -12,23 +12,29 @@ final socketServiceProvider = Provider<AdminSocketService>((ref) {
   final sessionsNotifier = ref.read(sessionsProvider.notifier);
 
   return AdminSocketService(
-    onComputerUpdate: () => computersNotifier.loadComputers(),
-    onSessionUpdate: () => sessionsNotifier.loadSessions(),
+    onComputerStatusChange: (id, status, data) =>
+        computersNotifier.updateComputerStatus(id, status),
+    onSessionUpdated: (data) =>
+        sessionsNotifier.applySessionUpdate(data, computersNotifier),
+    onComputerCommand: (id, command, data) =>
+        computersNotifier.setPendingCommand(id, command),
   );
 });
 
 // Computers Provider
-final computersProvider = StateNotifierProvider<ComputersNotifier, AsyncValue<List<Computer>>>((ref) {
-  final apiService = ref.watch(apiServiceProvider);
-  final sessionsNotifier = ref.read(sessionsProvider.notifier);
-  return ComputersNotifier(apiService, sessionsNotifier);
-});
+final computersProvider =
+    StateNotifierProvider<ComputersNotifier, AsyncValue<List<Computer>>>((ref) {
+      final apiService = ref.watch(apiServiceProvider);
+      final sessionsNotifier = ref.read(sessionsProvider.notifier);
+      return ComputersNotifier(apiService, sessionsNotifier);
+    });
 
 class ComputersNotifier extends StateNotifier<AsyncValue<List<Computer>>> {
   final ApiService _apiService;
   final SessionsNotifier _sessionsNotifier;
 
-  ComputersNotifier(this._apiService, this._sessionsNotifier) : super(const AsyncValue.loading()) {
+  ComputersNotifier(this._apiService, this._sessionsNotifier)
+    : super(const AsyncValue.loading()) {
     loadComputers();
   }
 
@@ -36,7 +42,9 @@ class ComputersNotifier extends StateNotifier<AsyncValue<List<Computer>>> {
     state = const AsyncValue.loading();
     try {
       final computersJson = await _apiService.getComputers();
-      final computers = computersJson.map((json) => Computer.fromJson(json)).toList();
+      final computers = computersJson
+          .map((json) => Computer.fromJson(json))
+          .toList();
       state = AsyncValue.data(computers);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -54,12 +62,88 @@ class ComputersNotifier extends StateNotifier<AsyncValue<List<Computer>>> {
     }
   }
 
+  void updateComputerStatus(String computerId, String status) {
+    final current = state.value;
+    if (current == null) return;
+    final updated = current
+        .map(
+          (c) => c.id == computerId
+              ? Computer(
+                  id: c.id,
+                  name: c.name,
+                  deviceToken: c.deviceToken,
+                  status: status,
+                  lastSeenAt: c.lastSeenAt,
+                  activeSessions: c.activeSessions,
+                  lastEndedCost: c.lastEndedCost,
+                  pendingCommand:
+                      null, // clear pending command on status change
+                )
+              : c,
+        )
+        .toList();
+    state = AsyncValue.data(updated);
+  }
+
+  void setLastEndedCost(String computerId, int cost) {
+    final current = state.value;
+    if (current == null) return;
+    final updated = current
+        .map(
+          (c) => c.id == computerId
+              ? Computer(
+                  id: c.id,
+                  name: c.name,
+                  deviceToken: c.deviceToken,
+                  status: c.status,
+                  lastSeenAt: c.lastSeenAt,
+                  activeSessions: c.activeSessions,
+                  lastEndedCost: cost,
+                  pendingCommand: c.pendingCommand,
+                )
+              : c,
+        )
+        .toList();
+    state = AsyncValue.data(updated);
+  }
+
+  void setPendingCommand(String computerId, String? command) {
+    final current = state.value;
+    if (current == null) return;
+    final updated = current
+        .map(
+          (c) => c.id == computerId
+              ? Computer(
+                  id: c.id,
+                  name: c.name,
+                  deviceToken: c.deviceToken,
+                  status: c.status,
+                  lastSeenAt: c.lastSeenAt,
+                  activeSessions: c.activeSessions,
+                  lastEndedCost: c.lastEndedCost,
+                  pendingCommand: command?.isNotEmpty == true ? command : null,
+                )
+              : c,
+        )
+        .toList();
+    state = AsyncValue.data(updated);
+  }
+
   Future<void> startComputer(String computerId) async {
     try {
-      // Create session
-      final session = await _apiService.createSession(computerId);
-      // Start session
-      await _apiService.startSession(session['id']);
+      // Try to resume paused session first
+      final sessions = await _apiService.getSessions();
+      final pausedSession = sessions.firstWhere(
+        (s) => s['computerId'] == computerId && s['status'] == 'PAUSED',
+        orElse: () => null,
+      );
+      if (pausedSession != null) {
+        await _apiService.resumeSession(pausedSession['id']);
+      } else {
+        // Create new session then start
+        final session = await _apiService.createSession(computerId);
+        await _apiService.startSession(session['id']);
+      }
       // Reload computers and sessions
       await loadComputers();
       _sessionsNotifier.loadSessions();
@@ -72,12 +156,18 @@ class ComputersNotifier extends StateNotifier<AsyncValue<List<Computer>>> {
     try {
       // Find the active session for this computer
       final sessions = await _apiService.getSessions();
-      final activeSession = sessions.firstWhere(
+      final createdSession = sessions.firstWhere(
         (s) => s['computerId'] == computerId && s['status'] == 'CREATED',
         orElse: () => null,
       );
-      if (activeSession != null) {
-        await _apiService.startSession(activeSession['id']);
+      final pausedSession = sessions.firstWhere(
+        (s) => s['computerId'] == computerId && s['status'] == 'PAUSED',
+        orElse: () => null,
+      );
+      if (pausedSession != null) {
+        await _apiService.resumeSession(pausedSession['id']);
+      } else if (createdSession != null) {
+        await _apiService.startSession(createdSession['id']);
       }
       // Reload computers and sessions
       await loadComputers();
@@ -108,10 +198,11 @@ class ComputersNotifier extends StateNotifier<AsyncValue<List<Computer>>> {
 }
 
 // Sessions Provider
-final sessionsProvider = StateNotifierProvider<SessionsNotifier, AsyncValue<List<Session>>>((ref) {
-  final apiService = ref.watch(apiServiceProvider);
-  return SessionsNotifier(apiService);
-});
+final sessionsProvider =
+    StateNotifierProvider<SessionsNotifier, AsyncValue<List<Session>>>((ref) {
+      final apiService = ref.watch(apiServiceProvider);
+      return SessionsNotifier(apiService);
+    });
 
 class SessionsNotifier extends StateNotifier<AsyncValue<List<Session>>> {
   final ApiService _apiService;
@@ -124,19 +215,71 @@ class SessionsNotifier extends StateNotifier<AsyncValue<List<Session>>> {
     state = const AsyncValue.loading();
     try {
       final sessionsJson = await _apiService.getSessions();
-      final sessions = sessionsJson.map((json) => Session.fromJson(json)).toList();
+      final sessions = sessionsJson
+          .map((json) => Session.fromJson(json))
+          .toList();
       state = AsyncValue.data(sessions);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
   }
+
+  void applySessionUpdate(
+    Map<String, dynamic> data,
+    ComputersNotifier computers,
+  ) {
+    final sid = data['sessionId']?.toString();
+    final status = data['status']?.toString();
+    final totalCost = data['totalCost'];
+    final computerId = data['computerId']?.toString();
+    final list = state.value ?? [];
+    bool found = false;
+    final updated = list.map((s) {
+      if (s.id == sid) {
+        found = true;
+        return Session(
+          id: s.id,
+          computerId: s.computerId,
+          startedAt: s.startedAt,
+          endedAt: status == 'ENDED' ? DateTime.now() : s.endedAt,
+          status: status ?? s.status,
+          pricePerMinute: s.pricePerMinute,
+          totalCost: totalCost is num ? totalCost as int : s.totalCost,
+        );
+      }
+      return s;
+    }).toList();
+    if (!found && sid != null && computerId != null) {
+      // Insert minimal session if not present
+      updated.insert(
+        0,
+        Session(
+          id: sid,
+          computerId: computerId,
+          status: status ?? 'UNKNOWN',
+          startedAt: null,
+          endedAt: status == 'ENDED' ? DateTime.now() : null,
+          pricePerMinute: 0,
+          totalCost: totalCost is num ? (totalCost as num).toInt() : null,
+        ),
+      );
+    }
+    state = AsyncValue.data(updated);
+    if (status == 'ENDED' && computerId != null && totalCost is num) {
+      computers.setLastEndedCost(computerId, (totalCost as num).toInt());
+      computers.updateComputerStatus(computerId, 'AVAILABLE');
+    }
+  }
 }
 
 // Stats Provider
-final statsProvider = StateNotifierProvider<StatsNotifier, AsyncValue<Map<String, dynamic>>>((ref) {
-  final apiService = ref.watch(apiServiceProvider);
-  return StatsNotifier(apiService);
-});
+final statsProvider =
+    StateNotifierProvider<StatsNotifier, AsyncValue<Map<String, dynamic>>>((
+      ref,
+    ) {
+      final apiService = ref.watch(apiServiceProvider);
+      return StatsNotifier(apiService);
+    });
 
 class StatsNotifier extends StateNotifier<AsyncValue<Map<String, dynamic>>> {
   final ApiService _apiService;
@@ -157,12 +300,17 @@ class StatsNotifier extends StateNotifier<AsyncValue<Map<String, dynamic>>> {
 }
 
 // Pricings Provider
-final pricingsProvider = StateNotifierProvider<PricingsNotifier, AsyncValue<List<Map<String, dynamic>>>>((ref) {
-  final apiService = ref.watch(apiServiceProvider);
-  return PricingsNotifier(apiService);
-});
+final pricingsProvider =
+    StateNotifierProvider<
+      PricingsNotifier,
+      AsyncValue<List<Map<String, dynamic>>>
+    >((ref) {
+      final apiService = ref.watch(apiServiceProvider);
+      return PricingsNotifier(apiService);
+    });
 
-class PricingsNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
+class PricingsNotifier
+    extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
   final ApiService _apiService;
 
   PricingsNotifier(this._apiService) : super(const AsyncValue.loading()) {
@@ -188,7 +336,11 @@ class PricingsNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic
     }
   }
 
-  Future<void> updatePricing(String id, int? pricePerMinute, bool? active) async {
+  Future<void> updatePricing(
+    String id,
+    int? pricePerMinute,
+    bool? active,
+  ) async {
     try {
       await _apiService.updatePricing(id, pricePerMinute, active);
       await loadPricings();
@@ -199,12 +351,17 @@ class PricingsNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic
 }
 
 // Cyber Centers Provider
-final cyberCentersProvider = StateNotifierProvider<CyberCentersNotifier, AsyncValue<List<Map<String, dynamic>>>>((ref) {
-  final apiService = ref.watch(apiServiceProvider);
-  return CyberCentersNotifier(apiService);
-});
+final cyberCentersProvider =
+    StateNotifierProvider<
+      CyberCentersNotifier,
+      AsyncValue<List<Map<String, dynamic>>>
+    >((ref) {
+      final apiService = ref.watch(apiServiceProvider);
+      return CyberCentersNotifier(apiService);
+    });
 
-class CyberCentersNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
+class CyberCentersNotifier
+    extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
   final ApiService _apiService;
 
   CyberCentersNotifier(this._apiService) : super(const AsyncValue.loading()) {
@@ -221,7 +378,11 @@ class CyberCentersNotifier extends StateNotifier<AsyncValue<List<Map<String, dyn
     }
   }
 
-  Future<void> createCyberCenter(String name, String? location, String organizationId) async {
+  Future<void> createCyberCenter(
+    String name,
+    String? location,
+    String organizationId,
+  ) async {
     try {
       await _apiService.createCyberCenter(name, location, organizationId);
       await loadCyberCenters();
@@ -232,12 +393,17 @@ class CyberCentersNotifier extends StateNotifier<AsyncValue<List<Map<String, dyn
 }
 
 // Users Provider
-final usersProvider = StateNotifierProvider<UsersNotifier, AsyncValue<List<Map<String, dynamic>>>>((ref) {
-  final apiService = ref.watch(apiServiceProvider);
-  return UsersNotifier(apiService);
-});
+final usersProvider =
+    StateNotifierProvider<
+      UsersNotifier,
+      AsyncValue<List<Map<String, dynamic>>>
+    >((ref) {
+      final apiService = ref.watch(apiServiceProvider);
+      return UsersNotifier(apiService);
+    });
 
-class UsersNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
+class UsersNotifier
+    extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
   final ApiService _apiService;
 
   UsersNotifier(this._apiService) : super(const AsyncValue.loading()) {
@@ -254,7 +420,12 @@ class UsersNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>
     }
   }
 
-  Future<void> createUser(String email, String password, String role, String? cyberCenterId) async {
+  Future<void> createUser(
+    String email,
+    String password,
+    String role,
+    String? cyberCenterId,
+  ) async {
     try {
       await _apiService.createUser(email, password, role, cyberCenterId);
       await loadUsers();
@@ -263,7 +434,13 @@ class UsersNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>
     }
   }
 
-  Future<void> updateUser(String id, String? email, String? password, String? role, int? balance) async {
+  Future<void> updateUser(
+    String id,
+    String? email,
+    String? password,
+    String? role,
+    int? balance,
+  ) async {
     try {
       await _apiService.updateUser(id, email, password, role, balance);
       await loadUsers();

@@ -62,9 +62,11 @@ model Session {
   userId String?
   user   User?   @relation(fields: [userId], references: [id])
 
-  startedAt DateTime?
-  endedAt   DateTime?
-  status    SessionStatus
+  startedAt    DateTime?
+  endedAt      DateTime?
+  status       SessionStatus
+  pausedAt     DateTime?
+  pausedMillis Int           @default(0)
 
   pricePerMinute Int
   totalCost      Int?
@@ -128,6 +130,7 @@ enum ComputerStatus {
 enum SessionStatus {
   CREATED
   ACTIVE
+  PAUSED
   ENDED
 }
 
@@ -143,6 +146,8 @@ enum EventType {
   COMPUTER_STATUS_CHANGED
   SESSION_STARTED
   SESSION_ACTIVATED
+  SESSION_PAUSED
+  SESSION_RESUMED
   SESSION_ENDED
   USER_LOGIN
   USER_LOGOUT

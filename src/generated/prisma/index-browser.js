@@ -152,6 +152,8 @@ exports.Prisma.SessionScalarFieldEnum = {
   startedAt: 'startedAt',
   endedAt: 'endedAt',
   status: 'status',
+  pausedAt: 'pausedAt',
+  pausedMillis: 'pausedMillis',
   pricePerMinute: 'pricePerMinute',
   totalCost: 'totalCost',
   createdAt: 'createdAt'
@@ -229,6 +231,7 @@ exports.ComputerStatus = exports.$Enums.ComputerStatus = {
 exports.SessionStatus = exports.$Enums.SessionStatus = {
   CREATED: 'CREATED',
   ACTIVE: 'ACTIVE',
+  PAUSED: 'PAUSED',
   ENDED: 'ENDED'
 };
 
@@ -244,6 +247,8 @@ exports.EventType = exports.$Enums.EventType = {
   COMPUTER_STATUS_CHANGED: 'COMPUTER_STATUS_CHANGED',
   SESSION_STARTED: 'SESSION_STARTED',
   SESSION_ACTIVATED: 'SESSION_ACTIVATED',
+  SESSION_PAUSED: 'SESSION_PAUSED',
+  SESSION_RESUMED: 'SESSION_RESUMED',
   SESSION_ENDED: 'SESSION_ENDED',
   USER_LOGIN: 'USER_LOGIN',
   USER_LOGOUT: 'USER_LOGOUT',

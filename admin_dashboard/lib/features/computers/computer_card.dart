@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../core/models.dart';
 
-class ComputerCard extends StatelessWidget {
+class ComputerCard extends StatefulWidget {
   final Computer computer;
   final VoidCallback onStart;
   final VoidCallback onUnlock;
@@ -16,7 +17,31 @@ class ComputerCard extends StatelessWidget {
   });
 
   @override
+  State<ComputerCard> createState() => _ComputerCardState();
+}
+
+class _ComputerCardState extends State<ComputerCard> {
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final hasTime = widget.computer.timeDisplay != null;
+    final hasCost = widget.computer.costDisplay != null;
+    final isActiveUI = widget.computer.status == 'IN_USE' && hasTime && hasCost;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(4.0),
@@ -29,10 +54,11 @@ class ComputerCard extends StatelessWidget {
               color: _getStatusColor(),
             ),
             const SizedBox(height: 2),
+            // Minimal header
             Text(
-              computer.name,
+              widget.computer.name,
               style: const TextStyle(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
@@ -40,35 +66,31 @@ class ComputerCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             Text(
-              computer.displayStatus,
+              widget.computer.displayStatus,
               style: TextStyle(
                 color: _getStatusColor(),
                 fontWeight: FontWeight.w500,
                 fontSize: 8,
               ),
             ),
-            if (computer.timeDisplay != null) ...[
-              Text(
-                'Time: ${computer.timeDisplay}',
-                style: const TextStyle(fontSize: 8),
-              ),
-            ],
-            if (computer.costDisplay != null) ...[
-              Text(
-                'Cost: ${computer.costDisplay}',
-                style: const TextStyle(fontSize: 8),
-              ),
+            // Active card only when both time and cost are available
+            if (isActiveUI) ...[
+              Text('Time: ${widget.computer.timeDisplay}', style: const TextStyle(fontSize: 10)),
+              Text('Cost: ${widget.computer.costDisplay}', style: const TextStyle(fontSize: 10)),
+            ] else ...[
+              if (widget.computer.lastEndedCost != null)
+                Text('Last Session: KES ${widget.computer.lastEndedCost}', style: const TextStyle(fontSize: 10)),
             ],
             const SizedBox(height: 4),
             ElevatedButton(
-              onPressed: _getButtonAction(),
+              onPressed: _getButtonAction(isActiveUI),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _getStatusColor(),
+                backgroundColor: _getButtonColor(isActiveUI),
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 textStyle: const TextStyle(fontSize: 10),
                 minimumSize: const Size(0, 24),
               ),
-              child: Text(_getButtonText()),
+              child: Text(_getButtonText(isActiveUI)),
             ),
           ],
         ),
@@ -77,7 +99,7 @@ class ComputerCard extends StatelessWidget {
   }
 
   Color _getStatusColor() {
-    switch (computer.status) {
+    switch (widget.computer.status) {
       case 'IN_USE':
         return Colors.green;
       case 'AVAILABLE':
@@ -91,33 +113,24 @@ class ComputerCard extends StatelessWidget {
     }
   }
 
-  String _getButtonText() {
-    switch (computer.status) {
-      case 'IN_USE':
-        return 'STOP';
-      case 'AVAILABLE':
-        return 'START';
-      case 'LOCKED':
-        return 'UNLOCK';
-      case 'OFFLINE':
-        return 'LOCK';
-      default:
-        return 'ACTION';
-    }
+  String _getButtonText(bool isActiveUI) {
+    if (isActiveUI) return 'STOP';
+    if (widget.computer.status == 'LOCKED') return 'UNLOCK';
+    if (widget.computer.status == 'AVAILABLE') return 'START';
+    return 'UNAVAILABLE';
   }
 
-  VoidCallback _getButtonAction() {
-    switch (computer.status) {
-      case 'IN_USE':
-        return onStop;
-      case 'AVAILABLE':
-        return onStart;
-      case 'LOCKED':
-        return onUnlock;
-      case 'OFFLINE':
-        return () {}; // No action
-      default:
-        return () {};
-    }
+  VoidCallback _getButtonAction(bool isActiveUI) {
+    if (isActiveUI) return widget.onStop;
+    if (widget.computer.status == 'LOCKED') return widget.onUnlock;
+    if (widget.computer.status == 'AVAILABLE') return widget.onStart;
+    return () {};
+  }
+
+  Color _getButtonColor(bool isActiveUI) {
+    if (isActiveUI) return Colors.green;
+    if (widget.computer.status == 'LOCKED') return Colors.red;
+    if (widget.computer.status == 'AVAILABLE') return Colors.grey;
+    return Colors.grey.shade400;
   }
 }

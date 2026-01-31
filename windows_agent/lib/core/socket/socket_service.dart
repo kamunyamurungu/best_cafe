@@ -8,6 +8,7 @@ import 'dart:ui';
 import '../config/config.dart';
 import '../state/agent_state.dart';
 import '../log/logger.dart';
+import '../state/session_summary.dart';
 
 class SocketService {
   late io.Socket socket;
@@ -51,7 +52,7 @@ class SocketService {
         print('Authenticated');
         print('Computer ID: ${data['computerId']}');
       }
-      await Logger.log('Auth OK: ${data}');
+      await Logger.log('Auth OK: $data');
       computerId = data['computerId'];
       final token = data['deviceToken'];
       await Config.setDeviceToken(token);
@@ -66,10 +67,48 @@ class SocketService {
       stateNotifier.setState(AgentState.error);
     });
 
+    socket.on('session_updated', (data) async {
+      try {
+        // Only react to updates for THIS computer
+        final cid = data['computerId']?.toString();
+        if (cid == null || cid != computerId) return;
+
+        final status = data['status']?.toString().toUpperCase();
+        if (status == 'ENDED') {
+          final dynamic totalCostRaw = data['totalCost'];
+          final dynamic minutesRaw = data['durationMinutes'];
+          final double? totalCost = totalCostRaw is num
+              ? totalCostRaw.toDouble()
+              : double.tryParse(totalCostRaw?.toString() ?? '');
+          final int? minutes = minutesRaw is num
+              ? minutesRaw.toInt()
+              : int.tryParse(minutesRaw?.toString() ?? '');
+          if (totalCost != null && minutes != null) {
+            await SessionSummaryStore.save(SessionSummary(minutes: minutes, cost: totalCost));
+          }
+          _lockComputer();
+        }
+      } catch (e) {
+        if (kDebugMode) print('session_updated handling error: $e');
+      }
+    });
+
     socket.connect();
   }
 
   Future<void> _authenticate() async {
+    try {
+      final token = await Config.deviceToken;
+      if (token.isNotEmpty) {
+        await Logger.log('Sending hello with deviceToken');
+        final name = Config.computerName;
+        socket.emit('hello', {
+          'name': name,
+          'deviceToken': token,
+        });
+        return;
+      }
+    } catch (_) {}
     final name = Config.computerName;
     await Logger.log('Sending hello for computer: $name');
     socket.emit('hello', {'name': name});
@@ -99,7 +138,7 @@ class SocketService {
               stateNotifier.setState(AgentState.locked);
               return;
             }
-            if (session != null && session['startedAt'] != null) {
+            if (session['startedAt'] != null) {
               stateNotifier.setState(AgentState.unlocked);
             } else {
               stateNotifier.setState(AgentState.locked);
@@ -200,5 +239,34 @@ class SocketService {
 
   void disconnect() {
     socket.disconnect();
+  }
+
+  Future<bool> applyServerUrl(String url) async {
+    try {
+      _heartbeatTimer?.cancel();
+      try {
+        socket.dispose();
+      } catch (_) {
+        try { socket.disconnect(); } catch (_) {}
+      }
+    } catch (_) {}
+
+    await Config.setServerUrl(url);
+    stateNotifier.setState(AgentState.disconnected);
+
+    // Start a fresh connection
+    connect();
+
+    // Wait up to 6 seconds for a connection state
+    const attempts = 12;
+    for (int i = 0; i < attempts; i++) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      final s = stateNotifier.state;
+      if (s == AgentState.connected || s == AgentState.locked || s == AgentState.unlocked) {
+        return true;
+      }
+      if (s == AgentState.error) return false;
+    }
+    return false;
   }
 }

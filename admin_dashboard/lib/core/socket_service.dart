@@ -4,12 +4,24 @@ import 'config_service.dart';
 
 class AdminSocketService {
   late io.Socket socket;
-  final Function onComputerUpdate;
-  final Function onSessionUpdate;
+  final void Function(
+    String computerId,
+    String status,
+    Map<String, dynamic> data,
+  )
+  onComputerStatusChange;
+  final void Function(Map<String, dynamic> data) onSessionUpdated;
+  final void Function(
+    String computerId,
+    String command,
+    Map<String, dynamic> data,
+  )
+  onComputerCommand;
 
   AdminSocketService({
-    required this.onComputerUpdate,
-    required this.onSessionUpdate,
+    required this.onComputerStatusChange,
+    required this.onSessionUpdated,
+    required this.onComputerCommand,
   });
 
   Future<void> connect() async {
@@ -35,21 +47,34 @@ class AdminSocketService {
       if (kDebugMode) {
         print('Computer status changed: $data');
       }
-      onComputerUpdate();
+      try {
+        final id = data['computerId']?.toString() ?? '';
+        final status = data['status']?.toString() ?? '';
+        onComputerStatusChange(id, status, Map<String, dynamic>.from(data));
+      } catch (_) {
+        // Fallback to reload
+        // ignore: deprecated_member_use
+      }
     });
 
     socket.on('computer_command_sent', (data) {
       if (kDebugMode) {
         print('Command sent to computer: $data');
       }
-      onComputerUpdate();
+      try {
+        final id = data['computerId']?.toString() ?? '';
+        final command = data['command']?.toString() ?? '';
+        onComputerCommand(id, command, Map<String, dynamic>.from(data));
+      } catch (_) {}
     });
 
     socket.on('session_updated', (data) {
       if (kDebugMode) {
         print('Session updated: $data');
       }
-      onSessionUpdate();
+      try {
+        onSessionUpdated(Map<String, dynamic>.from(data));
+      } catch (_) {}
     });
 
     socket.connect();

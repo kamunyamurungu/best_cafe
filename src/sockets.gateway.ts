@@ -23,14 +23,35 @@ export class SocketsGateway {
     private commandsService: CommandsService,
   ) {}
 
+  // Handle socket disconnects (computers)
+  async handleDisconnect(client: Socket) {
+    const computerId = client.data.computerId as string | undefined;
+    if (!computerId) return;
+    try {
+      // Pause any active session and lock immediately
+      await this.sessionsService.pauseActiveSessionForComputer(computerId);
+      await this.computersService.updateStatus(computerId, 'OFFLINE' as any);
+      // Notify admin dashboards only
+      await this.emitToAdmins('computer_status_changed', {
+        computerId,
+        status: 'OFFLINE',
+      });
+    } catch (e) {
+      // Swallow errors to avoid crashing on disconnect
+    }
+  }
+
   @SubscribeMessage('hello')
   async handleHello(
-    @MessageBody() data: { name: string },
+    @MessageBody() data: { name: string; deviceToken?: string },
     @ConnectedSocket() client: Socket,
   ) {
     try {
       if (!data.name) throw new Error('Computer name is required');
-      const computer = await this.computersService.registerComputer(data.name);
+      const computer = await this.computersService.registerComputer(data.name, data.deviceToken);
+      if (!computer) {
+        throw new Error('Computer registration failed');
+      }
 
       // Store computer ID in socket for later use
       client.data.computerId = computer.id;
@@ -97,6 +118,8 @@ export class SocketsGateway {
       }
       const command = await this.commandsService.adminUnlock(computerId, data.password);
       client.emit('command', { command: 'UNLOCK', commandId: command.id });
+      // Also notify admin dashboards so they update immediately (admins only)
+      this.emitToAdmins('computer_command_sent', { computerId, command: 'UNLOCK', commandId: command.id });
     } catch (error) {
       client.emit('error', { message: error.message });
     }
@@ -113,8 +136,8 @@ export class SocketsGateway {
       computerSocket.emit('command', { command, ...data });
     }
 
-    // Emit to all admin clients
-    this.server.emit('computer_command_sent', { computerId, command, ...data });
+    // Emit to admin clients only (avoid computers reacting to broadcast)
+    this.emitToAdmins('computer_command_sent', { computerId, command, ...data });
   }
 
   async unlockComputer(computerId: string) {
@@ -127,5 +150,20 @@ export class SocketsGateway {
     // Create command record
     const cmd = await this.commandsService.createCommand(computerId, 'LOCK');
     await this.sendCommandToComputer(computerId, 'LOCK', { commandId: cmd.id });
+  }
+
+  // Helper: emit events to admin dashboard sockets only
+  async emitToAdmins(event: string, payload: any) {
+    try {
+      const sockets = await this.server.fetchSockets();
+      for (const socket of sockets) {
+        // Admin dashboards should not have computerId set on their socket
+        if (!socket.data?.computerId) {
+          socket.emit(event, payload);
+        }
+      }
+    } catch (e) {
+      // Best-effort; avoid throwing from broadcast helpers
+    }
   }
 }

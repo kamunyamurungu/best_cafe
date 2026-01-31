@@ -109,6 +109,34 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> pauseSession(String sessionId) async {
+    final url = await baseUrl;
+    final response = await http.patch(
+      Uri.parse('$url/sessions/$sessionId/pause'),
+      headers: await _headers,
+      body: json.encode({}),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to pause session');
+    }
+  }
+
+  Future<Map<String, dynamic>> resumeSession(String sessionId) async {
+    final url = await baseUrl;
+    final response = await http.patch(
+      Uri.parse('$url/sessions/$sessionId/resume'),
+      headers: await _headers,
+      body: json.encode({}),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to resume session');
+    }
+  }
+
   Future<Map<String, dynamic>> register(String email, String password, String role) async {
     final url = await baseUrl;
     final response = await http.post(

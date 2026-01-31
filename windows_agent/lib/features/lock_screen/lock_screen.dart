@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
+import 'package:windows_agent/core/state/agent_state.dart';
 import '../../core/config/config.dart';
 import '../../core/socket/socket_service.dart';
 import '../../core/state/session_summary.dart';
@@ -70,19 +71,30 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.lock,
-              size: 100,
-              color: Colors.white,
+            Consumer<AgentStateNotifier>(
+              builder: (context, state, _) {
+                final color = _lockColorFor(state.state);
+                return Icon(
+                  Icons.lock,
+                  size: 100,
+                  color: color,
+                );
+              },
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Computer Locked',
-              style: TextStyle(
-                fontSize: 48,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Computer Locked',
+                  style: TextStyle(
+                    fontSize: 48,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ],
             ),
             const SizedBox(height: 20),
             const Text(
@@ -94,8 +106,8 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
             ),
             const SizedBox(height: 40),
             ElevatedButton(
-              onPressed: _showAdminUnlock,
-              child: const Text('Admin Unlock'),
+              onPressed: _startPayPerUseSession,
+              child: const Text('Start Pay Per Use Session'),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -104,18 +116,13 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _startPayPerUseSession,
-              child: const Text('Start Pay Per Use Session'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _configureServer,
-              child: const Text('Configure Server'),
+              onPressed: _showAdminMenu,
+              child: const Text('Admin'),
             ),
             const SizedBox(height: 20),
             if (_lastSummary != null) ...[
               Text(
-                'You used the computer for ${_lastSummary!.minutes} minutes, pay \$${_lastSummary!.cost.toStringAsFixed(2)}',
+                'You used the computer for ${_lastSummary!.minutes} minutes, pay KES ${_lastSummary!.cost.toStringAsFixed(0)}',
                 style: const TextStyle(fontSize: 20, color: Colors.white70),
                 textAlign: TextAlign.center,
               ),
@@ -173,6 +180,17 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
               controller: passwordController,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Password'),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _showCreateAccount();
+                },
+                child: const Text('Register new user'),
+              ),
             ),
           ],
         ),
@@ -235,6 +253,31 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
               }
             },
             child: const Text('Login'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAdminMenu() {
+    showDialog(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Admin'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showAdminUnlock();
+            },
+            child: const Text('Admin Login'),
+          ),
+          SimpleDialogOption(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _configureServerImproved();
+            },
+            child: const Text('Configure Server'),
           ),
         ],
       ),
@@ -329,8 +372,9 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
     }
   }
 
-  void _configureServer() {
-    final TextEditingController urlController = TextEditingController(text: 'http://192.168.100.70:3000');
+  void _configureServerImproved() async {
+    final current = await Config.serverUrl;
+    final TextEditingController urlController = TextEditingController(text: current);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -346,11 +390,13 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
           ),
           TextButton(
             onPressed: () async {
-              await Config.setServerUrl(urlController.text);
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Server URL updated. Please restart the app.')),
-              );
+              final ok = await _socketService.applyServerUrl(urlController.text);
+              if (context.mounted) {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(ok ? 'Connected to server' : 'Failed to connect')),
+                );
+              }
             },
             child: const Text('Save'),
           ),
@@ -367,5 +413,22 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
   @override
   void onWindowMinimize() {
     // Prevent minimizing
+  }
+}
+
+Color _lockColorFor(AgentState state) {
+  switch (state) {
+    case AgentState.unlocked:
+      return Colors.green;
+    case AgentState.locked:
+      return Colors.red;
+    case AgentState.connected:
+      return Colors.blueAccent;
+    case AgentState.disconnected:
+      return Colors.orange;
+    case AgentState.booting:
+      return Colors.yellow;
+    case AgentState.error:
+      return Colors.purple;
   }
 }

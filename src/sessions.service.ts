@@ -65,6 +65,11 @@ export class SessionsService {
       where: { id: computerId },
       data: { status: 'LOCKED' },
     });
+    // Notify admin dashboards (admins only)
+    await this.socketsGateway.emitToAdmins('computer_status_changed', {
+      computerId,
+      status: 'LOCKED',
+    });
 
     // Log event
     await this.prisma.event.create({
@@ -134,12 +139,14 @@ export class SessionsService {
       throw new NotFoundException('Session not found');
     }
 
-    if (session.status !== SessionStatus.ACTIVE) {
-      throw new ConflictException('Session is not active');
+    if (session.status !== SessionStatus.ACTIVE && session.status !== SessionStatus.PAUSED) {
+      throw new ConflictException('Session is not active or paused');
     }
 
     const endedAt = new Date();
-    const durationMs = endedAt.getTime() - (session.startedAt?.getTime() || endedAt.getTime());
+    const baseMs = endedAt.getTime() - (session.startedAt?.getTime() || endedAt.getTime());
+    const pausedMs = session.pausedMillis || 0;
+    const durationMs = Math.max(0, baseMs - pausedMs);
     const durationMinutes = Math.ceil(durationMs / 60000); // Round up to nearest minute
     const totalCost = durationMinutes * session.pricePerMinute;
 
@@ -185,6 +192,14 @@ export class SessionsService {
       },
     });
 
+    // Notify admins (admins only)
+    await this.socketsGateway.emitToAdmins('session_updated', {
+      sessionId,
+      computerId: session.computerId,
+      status: 'ENDED',
+      totalCost,
+    });
+
     // Send LOCK command to PC
     await this.socketsGateway.lockComputer(session.computerId);
 
@@ -210,7 +225,9 @@ export class SessionsService {
     }
 
     const now = new Date();
-    const durationMs = now.getTime() - session.startedAt.getTime();
+    const baseMs = now.getTime() - session.startedAt.getTime();
+    const pausedMs = session.pausedMillis || 0;
+    const durationMs = Math.max(0, baseMs - pausedMs);
     const durationMinutes = Math.ceil(durationMs / 60000);
     const totalCost = durationMinutes * session.pricePerMinute;
 
@@ -285,5 +302,105 @@ export class SessionsService {
       averageTime: Math.round(averageTime),
       topPcs,
     };
+  }
+
+  async pauseSession(sessionId: string) {
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session) throw new NotFoundException('Session not found');
+    if (session.status !== SessionStatus.ACTIVE)
+      throw new ConflictException('Only active sessions can be paused');
+
+    const pausedAt = new Date();
+    const updated = await this.prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        status: SessionStatus.PAUSED,
+        pausedAt,
+      },
+    });
+
+    // Lock computer
+    await this.prisma.computer.update({
+      where: { id: session.computerId },
+      data: { status: 'LOCKED' },
+    });
+    await this.socketsGateway.lockComputer(session.computerId);
+
+    // Log event
+    await this.prisma.event.create({
+      data: {
+        type: 'SESSION_PAUSED',
+        computerId: session.computerId,
+        payload: { sessionId },
+      },
+    });
+
+    // Notify admins (admins only)
+    await this.socketsGateway.emitToAdmins('session_updated', {
+      sessionId,
+      computerId: session.computerId,
+      status: 'PAUSED',
+    });
+
+    return updated;
+  }
+
+  async pauseActiveSessionForComputer(computerId: string) {
+    const activeSession = await this.prisma.session.findFirst({
+      where: { computerId, status: SessionStatus.ACTIVE },
+    });
+    if (activeSession) {
+      await this.pauseSession(activeSession.id);
+    }
+  }
+
+  async resumeSession(sessionId: string) {
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+    });
+    if (!session) throw new NotFoundException('Session not found');
+    if (session.status !== SessionStatus.PAUSED)
+      throw new ConflictException('Only paused sessions can be resumed');
+
+    const now = new Date();
+    const pausedAt = session.pausedAt ?? now;
+    const additionalPaused = Math.max(0, now.getTime() - pausedAt.getTime());
+
+    const updated = await this.prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        status: SessionStatus.ACTIVE,
+        pausedAt: null,
+        pausedMillis: (session.pausedMillis || 0) + additionalPaused,
+      },
+    });
+
+    // Unlock computer
+    await this.prisma.computer.update({
+      where: { id: session.computerId },
+      data: { status: 'IN_USE' },
+    });
+    await this.socketsGateway.unlockComputer(session.computerId);
+
+    // Log event
+    await this.prisma.event.create({
+      data: {
+        type: 'SESSION_RESUMED',
+        computerId: session.computerId,
+        payload: { sessionId },
+      },
+    });
+
+    // Notify admins (admins only)
+    await this.socketsGateway.emitToAdmins('session_updated', {
+      sessionId,
+      computerId: session.computerId,
+      status: 'ACTIVE',
+    });
+
+    return updated;
   }
 }

@@ -40,6 +40,9 @@ $ npm run start
 # watch mode
 $ npm run start:dev
 
+# watch mode on dev port (Windows)
+$ npm run start:dev:3001
+
 # production mode
 $ npm run start:prod
 ```
@@ -58,6 +61,26 @@ $ npm run test:cov
 ```
 
 ## Deployment
+## Local Development with Admin Dashboard & Agent
+
+To run the dev backend alongside a production service using port 3000, start the dev server on a different port and point clients to it:
+
+- Start backend on port 3001 (Windows):
+
+```powershell
+$env:PORT = 3001; $env:HOST = "0.0.0.0"; npm run start:dev
+```
+
+Or use the convenience script:
+
+```powershell
+npm run start:dev:3001
+```
+
+- Admin Dashboard: Open Settings → Server URL and set to `http://localhost:3001`.
+- Windows Agent: On the lock screen, choose “Configure Server URL” and set to `http://localhost:3001`.
+
+This avoids `EADDRINUSE` when the production service is already listening on `3000`.
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 

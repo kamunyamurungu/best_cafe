@@ -281,50 +281,56 @@ class _UnlockedScreenState extends State<UnlockedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: Container(
-            width: 320,
-            height: 80,
-          margin: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.85),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.blueAccent, width: 2),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                      const Text('Active', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      Text('Time: ${_elapsed.inMinutes}:${(_elapsed.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(color: Colors.white70)),
-                  ],
-                ),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {},
+            child: Container(
+              width: 340,
+              height: 90,
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.88),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.blueAccent, width: 2),
               ),
-                Row(
-                  children: [
-                    IconButton(
-                      tooltip: 'End Session',
-                      onPressed: _endSession,
-                      icon: const Icon(Icons.stop_circle, color: Colors.redAccent),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Active', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        Text('Time: ${_elapsed.inMinutes}:${(_elapsed.inSeconds % 60).toString().padLeft(2, '0')}', style: const TextStyle(color: Colors.white70)),
+                      ],
                     ),
-                    IconButton(
-                      tooltip: 'Run in background',
-                      onPressed: () async {
-                        await windowManager.hide();
-                      },
-                      icon: const Icon(Icons.minimize, color: Colors.white70),
-                    ),
-                  ],
-                ),
-            ],
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'End Session',
+                        onPressed: _endSession,
+                        icon: const Icon(Icons.stop_circle, color: Colors.redAccent),
+                      ),
+                      IconButton(
+                        tooltip: 'Run in background',
+                        onPressed: () async {
+                          await windowManager.hide();
+                        },
+                        icon: const Icon(Icons.minimize, color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

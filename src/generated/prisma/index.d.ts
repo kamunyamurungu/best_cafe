@@ -72,6 +72,7 @@ export type ComputerStatus = (typeof ComputerStatus)[keyof typeof ComputerStatus
 export const SessionStatus: {
   CREATED: 'CREATED',
   ACTIVE: 'ACTIVE',
+  PAUSED: 'PAUSED',
   ENDED: 'ENDED'
 };
 
@@ -93,6 +94,8 @@ export const EventType: {
   COMPUTER_STATUS_CHANGED: 'COMPUTER_STATUS_CHANGED',
   SESSION_STARTED: 'SESSION_STARTED',
   SESSION_ACTIVATED: 'SESSION_ACTIVATED',
+  SESSION_PAUSED: 'SESSION_PAUSED',
+  SESSION_RESUMED: 'SESSION_RESUMED',
   SESSION_ENDED: 'SESSION_ENDED',
   USER_LOGIN: 'USER_LOGIN',
   USER_LOGOUT: 'USER_LOGOUT',
@@ -5124,11 +5127,13 @@ export namespace Prisma {
   }
 
   export type SessionAvgAggregateOutputType = {
+    pausedMillis: number | null
     pricePerMinute: number | null
     totalCost: number | null
   }
 
   export type SessionSumAggregateOutputType = {
+    pausedMillis: number | null
     pricePerMinute: number | null
     totalCost: number | null
   }
@@ -5141,6 +5146,8 @@ export namespace Prisma {
     startedAt: Date | null
     endedAt: Date | null
     status: $Enums.SessionStatus | null
+    pausedAt: Date | null
+    pausedMillis: number | null
     pricePerMinute: number | null
     totalCost: number | null
     createdAt: Date | null
@@ -5154,6 +5161,8 @@ export namespace Prisma {
     startedAt: Date | null
     endedAt: Date | null
     status: $Enums.SessionStatus | null
+    pausedAt: Date | null
+    pausedMillis: number | null
     pricePerMinute: number | null
     totalCost: number | null
     createdAt: Date | null
@@ -5167,6 +5176,8 @@ export namespace Prisma {
     startedAt: number
     endedAt: number
     status: number
+    pausedAt: number
+    pausedMillis: number
     pricePerMinute: number
     totalCost: number
     createdAt: number
@@ -5175,11 +5186,13 @@ export namespace Prisma {
 
 
   export type SessionAvgAggregateInputType = {
+    pausedMillis?: true
     pricePerMinute?: true
     totalCost?: true
   }
 
   export type SessionSumAggregateInputType = {
+    pausedMillis?: true
     pricePerMinute?: true
     totalCost?: true
   }
@@ -5192,6 +5205,8 @@ export namespace Prisma {
     startedAt?: true
     endedAt?: true
     status?: true
+    pausedAt?: true
+    pausedMillis?: true
     pricePerMinute?: true
     totalCost?: true
     createdAt?: true
@@ -5205,6 +5220,8 @@ export namespace Prisma {
     startedAt?: true
     endedAt?: true
     status?: true
+    pausedAt?: true
+    pausedMillis?: true
     pricePerMinute?: true
     totalCost?: true
     createdAt?: true
@@ -5218,6 +5235,8 @@ export namespace Prisma {
     startedAt?: true
     endedAt?: true
     status?: true
+    pausedAt?: true
+    pausedMillis?: true
     pricePerMinute?: true
     totalCost?: true
     createdAt?: true
@@ -5318,6 +5337,8 @@ export namespace Prisma {
     startedAt: Date | null
     endedAt: Date | null
     status: $Enums.SessionStatus
+    pausedAt: Date | null
+    pausedMillis: number
     pricePerMinute: number
     totalCost: number | null
     createdAt: Date
@@ -5350,6 +5371,8 @@ export namespace Prisma {
     startedAt?: boolean
     endedAt?: boolean
     status?: boolean
+    pausedAt?: boolean
+    pausedMillis?: boolean
     pricePerMinute?: boolean
     totalCost?: boolean
     createdAt?: boolean
@@ -5366,6 +5389,8 @@ export namespace Prisma {
     startedAt?: boolean
     endedAt?: boolean
     status?: boolean
+    pausedAt?: boolean
+    pausedMillis?: boolean
     pricePerMinute?: boolean
     totalCost?: boolean
     createdAt?: boolean
@@ -5382,6 +5407,8 @@ export namespace Prisma {
     startedAt?: boolean
     endedAt?: boolean
     status?: boolean
+    pausedAt?: boolean
+    pausedMillis?: boolean
     pricePerMinute?: boolean
     totalCost?: boolean
     createdAt?: boolean
@@ -5398,12 +5425,14 @@ export namespace Prisma {
     startedAt?: boolean
     endedAt?: boolean
     status?: boolean
+    pausedAt?: boolean
+    pausedMillis?: boolean
     pricePerMinute?: boolean
     totalCost?: boolean
     createdAt?: boolean
   }
 
-  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "computerId" | "cyberCenterId" | "userId" | "startedAt" | "endedAt" | "status" | "pricePerMinute" | "totalCost" | "createdAt", ExtArgs["result"]["session"]>
+  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "computerId" | "cyberCenterId" | "userId" | "startedAt" | "endedAt" | "status" | "pausedAt" | "pausedMillis" | "pricePerMinute" | "totalCost" | "createdAt", ExtArgs["result"]["session"]>
   export type SessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     computer?: boolean | ComputerDefaultArgs<ExtArgs>
     cyberCenter?: boolean | Session$cyberCenterArgs<ExtArgs>
@@ -5435,6 +5464,8 @@ export namespace Prisma {
       startedAt: Date | null
       endedAt: Date | null
       status: $Enums.SessionStatus
+      pausedAt: Date | null
+      pausedMillis: number
       pricePerMinute: number
       totalCost: number | null
       createdAt: Date
@@ -5871,6 +5902,8 @@ export namespace Prisma {
     readonly startedAt: FieldRef<"Session", 'DateTime'>
     readonly endedAt: FieldRef<"Session", 'DateTime'>
     readonly status: FieldRef<"Session", 'SessionStatus'>
+    readonly pausedAt: FieldRef<"Session", 'DateTime'>
+    readonly pausedMillis: FieldRef<"Session", 'Int'>
     readonly pricePerMinute: FieldRef<"Session", 'Int'>
     readonly totalCost: FieldRef<"Session", 'Int'>
     readonly createdAt: FieldRef<"Session", 'DateTime'>
@@ -10789,6 +10822,8 @@ export namespace Prisma {
     startedAt: 'startedAt',
     endedAt: 'endedAt',
     status: 'status',
+    pausedAt: 'pausedAt',
+    pausedMillis: 'pausedMillis',
     pricePerMinute: 'pricePerMinute',
     totalCost: 'totalCost',
     createdAt: 'createdAt'
@@ -11221,6 +11256,8 @@ export namespace Prisma {
     startedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
     endedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
     status?: EnumSessionStatusFilter<"Session"> | $Enums.SessionStatus
+    pausedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
+    pausedMillis?: IntFilter<"Session"> | number
     pricePerMinute?: IntFilter<"Session"> | number
     totalCost?: IntNullableFilter<"Session"> | number | null
     createdAt?: DateTimeFilter<"Session"> | Date | string
@@ -11237,6 +11274,8 @@ export namespace Prisma {
     startedAt?: SortOrderInput | SortOrder
     endedAt?: SortOrderInput | SortOrder
     status?: SortOrder
+    pausedAt?: SortOrderInput | SortOrder
+    pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -11256,6 +11295,8 @@ export namespace Prisma {
     startedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
     endedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
     status?: EnumSessionStatusFilter<"Session"> | $Enums.SessionStatus
+    pausedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
+    pausedMillis?: IntFilter<"Session"> | number
     pricePerMinute?: IntFilter<"Session"> | number
     totalCost?: IntNullableFilter<"Session"> | number | null
     createdAt?: DateTimeFilter<"Session"> | Date | string
@@ -11272,6 +11313,8 @@ export namespace Prisma {
     startedAt?: SortOrderInput | SortOrder
     endedAt?: SortOrderInput | SortOrder
     status?: SortOrder
+    pausedAt?: SortOrderInput | SortOrder
+    pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -11293,6 +11336,8 @@ export namespace Prisma {
     startedAt?: DateTimeNullableWithAggregatesFilter<"Session"> | Date | string | null
     endedAt?: DateTimeNullableWithAggregatesFilter<"Session"> | Date | string | null
     status?: EnumSessionStatusWithAggregatesFilter<"Session"> | $Enums.SessionStatus
+    pausedAt?: DateTimeNullableWithAggregatesFilter<"Session"> | Date | string | null
+    pausedMillis?: IntWithAggregatesFilter<"Session"> | number
     pricePerMinute?: IntWithAggregatesFilter<"Session"> | number
     totalCost?: IntNullableWithAggregatesFilter<"Session"> | number | null
     createdAt?: DateTimeWithAggregatesFilter<"Session"> | Date | string
@@ -11747,6 +11792,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -11763,6 +11810,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -11773,6 +11822,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11789,6 +11840,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11802,6 +11855,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -11812,6 +11867,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11825,6 +11882,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12413,12 +12472,15 @@ export namespace Prisma {
     startedAt?: SortOrder
     endedAt?: SortOrder
     status?: SortOrder
+    pausedAt?: SortOrder
+    pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrder
     createdAt?: SortOrder
   }
 
   export type SessionAvgOrderByAggregateInput = {
+    pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrder
   }
@@ -12431,6 +12493,8 @@ export namespace Prisma {
     startedAt?: SortOrder
     endedAt?: SortOrder
     status?: SortOrder
+    pausedAt?: SortOrder
+    pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrder
     createdAt?: SortOrder
@@ -12444,12 +12508,15 @@ export namespace Prisma {
     startedAt?: SortOrder
     endedAt?: SortOrder
     status?: SortOrder
+    pausedAt?: SortOrder
+    pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrder
     createdAt?: SortOrder
   }
 
   export type SessionSumOrderByAggregateInput = {
+    pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrder
   }
@@ -13692,6 +13759,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -13706,6 +13775,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -13832,6 +13903,8 @@ export namespace Prisma {
     startedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
     endedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
     status?: EnumSessionStatusFilter<"Session"> | $Enums.SessionStatus
+    pausedAt?: DateTimeNullableFilter<"Session"> | Date | string | null
+    pausedMillis?: IntFilter<"Session"> | number
     pricePerMinute?: IntFilter<"Session"> | number
     totalCost?: IntNullableFilter<"Session"> | number | null
     createdAt?: DateTimeFilter<"Session"> | Date | string
@@ -13896,6 +13969,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -13910,6 +13985,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -14319,6 +14396,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -14333,6 +14412,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -14649,6 +14730,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -14701,6 +14784,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14715,6 +14800,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14727,6 +14814,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14770,6 +14859,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -14797,6 +14888,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14811,6 +14904,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14823,6 +14918,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14894,6 +14991,8 @@ export namespace Prisma {
     startedAt?: Date | string | null
     endedAt?: Date | string | null
     status: $Enums.SessionStatus
+    pausedAt?: Date | string | null
+    pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
     createdAt?: Date | string
@@ -14928,6 +15027,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14942,6 +15043,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14954,6 +15057,8 @@ export namespace Prisma {
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     endedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSessionStatusFieldUpdateOperationsInput | $Enums.SessionStatus
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
