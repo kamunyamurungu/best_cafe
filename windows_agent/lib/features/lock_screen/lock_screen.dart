@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
@@ -19,6 +20,7 @@ class LockScreen extends StatefulWidget {
 class _LockScreenState extends State<LockScreen> with WindowListener {
   late SocketService _socketService;
   SessionSummary? _lastSummary;
+  bool _summaryPopupShown = false;
   @override
   void initState() {
     super.initState();
@@ -60,6 +62,12 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
       setState(() {
         _lastSummary = summary;
       });
+      if (summary != null && !_summaryPopupShown) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showEndedPopup(summary);
+          _summaryPopupShown = true;
+        });
+      }
     }
   }
 
@@ -67,10 +75,15 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+      body: Column(
+        children: [
+          // Hide native title bar by providing an empty custom title bar box
+          WindowTitleBarBox(child: SizedBox(height: 1)),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
             Consumer<AgentStateNotifier>(
               builder: (context, state, _) {
                 final color = _lockColorFor(state.state);
@@ -122,15 +135,41 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
             const SizedBox(height: 20),
             if (_lastSummary != null) ...[
               Text(
-                'You used the computer for ${_lastSummary!.minutes} minutes, pay KES ${_lastSummary!.cost.toStringAsFixed(0)}',
+                'You used the computer for ${_formatHms(_lastSummary!.seconds)} (≈ ${_lastSummary!.minutes} min), pay Ksh ${_lastSummary!.cost.toStringAsFixed(0)}',
                 style: const TextStyle(fontSize: 20, color: Colors.white70),
                 textAlign: TextAlign.center,
               ),
             ],
-          ],
-        ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  void _showEndedPopup(SessionSummary summary) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Session Ended'),
+        content: Text('Total cost: Ksh ${summary.cost.toStringAsFixed(2)}'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    // Auto-close after 10 seconds
+    Future.delayed(const Duration(seconds: 10), () {
+      if (!mounted) return;
+      if (Navigator.of(context, rootNavigator: true).canPop()) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    });
   }
 
   void _showAdminUnlock() {
@@ -418,17 +457,23 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
 
 Color _lockColorFor(AgentState state) {
   switch (state) {
+    case AgentState.connected:
+    case AgentState.locked:
     case AgentState.unlocked:
       return Colors.green;
-    case AgentState.locked:
-      return Colors.red;
-    case AgentState.connected:
-      return Colors.blueAccent;
     case AgentState.disconnected:
-      return Colors.orange;
     case AgentState.booting:
-      return Colors.yellow;
     case AgentState.error:
-      return Colors.purple;
+      return Colors.red;
   }
+}
+
+String _formatHms(int seconds) {
+  final h = (seconds ~/ 3600);
+  final m = (seconds % 3600) ~/ 60;
+  final s = seconds % 60;
+  if (h > 0) {
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+  return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
 }

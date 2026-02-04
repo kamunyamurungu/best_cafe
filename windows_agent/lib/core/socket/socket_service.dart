@@ -70,21 +70,113 @@ class SocketService {
     socket.on('session_updated', (data) async {
       try {
         // Only react to updates for THIS computer
-        final cid = data['computerId']?.toString();
+        final cid = data['computerId']?.toString() ?? data['session']?['computerId']?.toString();
         if (cid == null || cid != computerId) return;
 
-        final status = data['status']?.toString().toUpperCase();
+        // Support nested payloads where session data is under 'session'
+        final Map<String, dynamic> s =
+            (data['session'] is Map<String, dynamic>) ? Map<String, dynamic>.from(data['session']) : Map<String, dynamic>.from(data as Map);
+
+        final status = (s['status'] ?? data['status'])?.toString().toUpperCase();
         if (status == 'ENDED') {
-          final dynamic totalCostRaw = data['totalCost'];
-          final dynamic minutesRaw = data['durationMinutes'];
-          final double? totalCost = totalCostRaw is num
-              ? totalCostRaw.toDouble()
-              : double.tryParse(totalCostRaw?.toString() ?? '');
-          final int? minutes = minutesRaw is num
-              ? minutesRaw.toInt()
-              : int.tryParse(minutesRaw?.toString() ?? '');
+          T? getFirst<T>(Map<String, dynamic> m, List<String> keys) {
+            for (final k in keys) {
+              final v = m[k];
+              if (v != null) return v as T?;
+            }
+            return null;
+          }
+
+          double? parseDouble(dynamic v) {
+            if (v == null) return null;
+            if (v is num) return v.toDouble();
+            return double.tryParse(v.toString());
+          }
+
+          int? parseInt(dynamic v) {
+            if (v == null) return null;
+            if (v is num) return v.toInt();
+            return int.tryParse(v.toString());
+          }
+
+          // Extract values from nested or top-level
+          final dynamic costRaw = getFirst(s, ['totalCost', 'cost', 'total_cost', 'amount', 'amountKsh', 'amountKES']) ??
+              getFirst(data, ['totalCost', 'cost', 'total_cost', 'amount', 'amountKsh', 'amountKES']);
+            final dynamic minutesRaw = getFirst(s, ['totalMinutes', 'durationMinutes', 'minutes', 'total_minutes', 'duration_minutes', 'billedMinutes', 'billingMinutes']) ??
+              getFirst(data, ['totalMinutes', 'durationMinutes', 'minutes', 'total_minutes', 'duration_minutes', 'billedMinutes', 'billingMinutes']);
+            final dynamic secondsRaw = getFirst(s, ['durationSeconds', 'seconds', 'totalSeconds']) ??
+              getFirst(data, ['durationSeconds', 'seconds', 'totalSeconds']);
+            final dynamic millisRaw = getFirst(s, ['durationMs', 'durationMillis', 'durationMilliseconds']) ??
+              getFirst(data, ['durationMs', 'durationMillis', 'durationMilliseconds']);
+          final String? startedAtStr = (getFirst(s, ['startedAt', 'started_at', 'startTime', 'start']))?.toString() ??
+              (getFirst(data, ['startedAt', 'started_at', 'startTime', 'start']))?.toString();
+          final String? endedAtStr = (getFirst(s, ['endedAt', 'ended_at', 'endTime', 'end']))?.toString() ??
+              (getFirst(data, ['endedAt', 'ended_at', 'endTime', 'end']))?.toString();
+          final String? sessionId = (getFirst(s, ['id', 'sessionId']))?.toString() ?? (getFirst(data, ['id', 'sessionId']))?.toString();
+
+          double? totalCost = parseDouble(costRaw);
+          int? minutes = parseInt(minutesRaw);
+          int secondsForStore = 0;
+          int? seconds = parseInt(secondsRaw);
+          int? millis = parseInt(millisRaw);
+
+          // If seconds/millis exist, compute ceil minutes
+          if ((minutes == null || minutes <= 0)) {
+            if (seconds != null && seconds > 0) {
+              minutes = ((seconds + 59) / 60).floor();
+              secondsForStore = seconds;
+            } else if (millis != null && millis > 0) {
+              final int secs = (millis / 1000).round();
+              minutes = ((secs + 59) / 60).floor();
+              secondsForStore = secs;
+            }
+          }
+
+          // Fallback compute from timestamps if minutes missing
+          if ((minutes == null || minutes <= 0) && startedAtStr != null && endedAtStr != null) {
+            final startedAt = DateTime.tryParse(startedAtStr);
+            final endedAt = DateTime.tryParse(endedAtStr);
+            if (startedAt != null && endedAt != null) {
+              final int secs = endedAt.difference(startedAt).inSeconds;
+              minutes = ((secs + 59) / 60).floor();
+              secondsForStore = secs;
+            }
+          }
+
+          // Final fallback: fetch by session id if available
+          if ((totalCost == null || minutes == null || minutes <= 0) && sessionId != null) {
+            try {
+              final url = '${await Config.serverUrl}/sessions/$sessionId';
+              final resp = await http.get(Uri.parse(url));
+              if (resp.statusCode == 200 && resp.body.isNotEmpty) {
+                final m = jsonDecode(resp.body) as Map<String, dynamic>;
+                totalCost = totalCost ?? parseDouble(getFirst(m, ['totalCost', 'cost', 'total_cost']));
+                minutes = minutes ?? parseInt(getFirst(m, ['totalMinutes', 'durationMinutes', 'billedMinutes']));
+                if (minutes == null || minutes <= 0) {
+                  final sa = (getFirst(m, ['startedAt', 'started_at']))?.toString();
+                  final ea = (getFirst(m, ['endedAt', 'ended_at']))?.toString();
+                  final sdt = sa != null ? DateTime.tryParse(sa) : null;
+                  final edt = ea != null ? DateTime.tryParse(ea) : null;
+                  if (sdt != null && edt != null) {
+                    final int secs = edt.difference(sdt).inSeconds;
+                    minutes = ((secs + 59) / 60).floor();
+                    secondsForStore = secs;
+                  }
+                }
+              }
+            } catch (_) {}
+          }
+
+          // If cost is positive but minutes == 0, coerce to at least 1 minute to reflect billed time
+          if ((minutes == null || minutes <= 0) && (totalCost ?? 0) > 0) {
+            minutes = 1;
+          }
+
           if (totalCost != null && minutes != null) {
-            await SessionSummaryStore.save(SessionSummary(minutes: minutes, cost: totalCost));
+            if (secondsForStore <= 0 && minutes > 0) {
+              secondsForStore = minutes * 60;
+            }
+            await SessionSummaryStore.save(SessionSummary(minutes: minutes, cost: totalCost, seconds: secondsForStore));
           }
           _lockComputer();
         }
@@ -202,7 +294,7 @@ class SocketService {
     if (!kDebugMode) {
       await windowManager.waitUntilReadyToShow(
         const WindowOptions(
-          size: Size(320, 80),
+          size: Size(460, 140),
           alwaysOnTop: true,
           skipTaskbar: false,
           fullScreen: false,

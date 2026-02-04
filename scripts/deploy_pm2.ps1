@@ -1,6 +1,6 @@
 Param(
   [string]$Port = $env:PORT,
-  [string]$Host = $env:HOST
+  [string]$ServerHost = $env:HOST
 )
 
 Write-Host "Starting PM2 deployment..." -ForegroundColor Cyan
@@ -11,7 +11,7 @@ Push-Location ..
 
 # Optional: set env overrides
 if ($Port) { $env:PORT = $Port }
-if ($Host) { $env:HOST = $Host }
+if ($ServerHost) { $env:HOST = $ServerHost }
 
 Write-Host "Installing dependencies (npm ci)..." -ForegroundColor Yellow
 if (Test-Path package-lock.json) {
@@ -39,20 +39,41 @@ if (-not (Test-Path "dist/src/main.js")) {
 }
 
 Write-Host "Starting/reloading PM2 process 'cyber-backend'..." -ForegroundColor Yellow
-# Start using ecosystem (creates process if missing) and update env
-pm2 start ecosystem.config.js --only cyber-backend --update-env
-if ($LASTEXITCODE -ne 0) { Write-Error "pm2 start failed"; Exit 1 }
+try {
+  # Ensure PM2 is available
+  if (-not (Get-Command pm2 -ErrorAction SilentlyContinue)) {
+    throw "PM2 is not installed or not on PATH"
+  }
 
-pm2 reload cyber-backend
-if ($LASTEXITCODE -ne 0) { Write-Error "pm2 reload failed"; Exit 1 }
+  # Start using ecosystem (creates process if missing) and update env
+  pm2 start ecosystem.config.js --only cyber-backend --update-env
+  if ($LASTEXITCODE -ne 0) { throw "pm2 start failed" }
 
-pm2 save
+  pm2 reload cyber-backend
+  if ($LASTEXITCODE -ne 0) { throw "pm2 reload failed" }
 
-Write-Host "PM2 status:" -ForegroundColor Cyan
-pm2 status
+  pm2 save
 
-Write-Host "Recent logs for cyber-backend:" -ForegroundColor Cyan
-pm2 logs cyber-backend --lines 50
+  Write-Host "PM2 status:" -ForegroundColor Cyan
+  pm2 status
+
+  Write-Host "Recent logs for cyber-backend (streaming)..." -ForegroundColor Cyan
+  pm2 logs cyber-backend --lines 50
+}
+catch {
+  Write-Warning "PM2 unavailable or failed - starting app directly with Node as fallback."
+  if ($null -ne $_) { Write-Host ("PM2 error: {0}" -f ($_.Exception.Message)) -ForegroundColor Yellow }
+  $logDir = Join-Path (Get-Location) "logs"
+  if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir | Out-Null }
+  $stdout = Join-Path $logDir "cyber-backend.node.out.log"
+  $stderr = Join-Path $logDir "cyber-backend.node.err.log"
+  $args = "dist/src/main.js"
+  $proc = Start-Process -FilePath "node" -ArgumentList $args -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr -WindowStyle Hidden
+  if ($null -eq $proc) { Write-Error "Failed to start Node fallback process"; Exit 1 }
+  Write-Host ("Node fallback started (PID {0})." -f $proc.Id) -ForegroundColor Green
+  Write-Host ("Stdout: {0}" -f $stdout) -ForegroundColor Green
+  Write-Host ("Stderr: {0}" -f $stderr) -ForegroundColor Green
+}
 
 Pop-Location
 Pop-Location
