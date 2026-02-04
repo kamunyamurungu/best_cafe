@@ -55,4 +55,10 @@ export class SessionsController {
   async calculateCost(@Param('id') sessionId: string) {
     return this.sessionsService.calculateCost(sessionId);
   }
+
+  // New: fetch a single session by ID (used by agents after admin stop)
+  @Get(':id')
+  async getSessionById(@Param('id') sessionId: string) {
+    return this.sessionsService.getSessionById(sessionId);
+  }
 }

@@ -198,6 +198,20 @@ export class SessionsService {
       computerId: session.computerId,
       status: 'ENDED',
       totalCost,
+      totalMinutes: durationMinutes,
+      startedAt: session.startedAt,
+      endedAt,
+    });
+
+    // Notify the specific computer as well so the agent can persist summary
+    await this.socketsGateway.emitToComputer(session.computerId, 'session_updated', {
+      sessionId,
+      computerId: session.computerId,
+      status: 'ENDED',
+      totalCost,
+      totalMinutes: durationMinutes,
+      startedAt: session.startedAt,
+      endedAt,
     });
 
     // Send LOCK command to PC
@@ -232,6 +246,17 @@ export class SessionsService {
     const totalCost = durationMinutes * session.pricePerMinute;
 
     return { durationMinutes, totalCost };
+  }
+
+  // New: get single session by id (includes timestamps and totals)
+  async getSessionById(sessionId: string) {
+    return this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        computer: true,
+        user: true,
+      },
+    });
   }
 
   async getAllSessions() {

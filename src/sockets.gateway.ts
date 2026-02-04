@@ -166,4 +166,17 @@ export class SocketsGateway {
       // Best-effort; avoid throwing from broadcast helpers
     }
   }
+
+  // Helper: emit a specific event to a single computer socket
+  async emitToComputer(computerId: string, event: string, payload: any) {
+    try {
+      const sockets = await this.server.fetchSockets();
+      const computerSocket = sockets.find((socket) => socket.data.computerId === computerId);
+      if (computerSocket) {
+        computerSocket.emit(event, payload);
+      }
+    } catch (e) {
+      // best-effort
+    }
+  }
 }
