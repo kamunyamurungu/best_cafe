@@ -1,7 +1,9 @@
 import { Injectable, ConflictException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { SocketsGateway } from './sockets.gateway';
-import { SessionStatus } from './generated/prisma';
+import { SessionStatus, UserRole, UserStatus } from './generated/prisma';
+import { TransactionStatus, TransactionType } from './billing.enums';
+import { AuditService } from './audit/audit.service';
 
 @Injectable()
 export class SessionsService {
@@ -9,9 +11,10 @@ export class SessionsService {
     private prisma: PrismaService,
     @Inject(forwardRef(() => SocketsGateway))
     private socketsGateway: SocketsGateway,
+    private auditService: AuditService,
   ) {}
 
-  async createSession(computerId: string, userId?: string) {
+  async createSession(computerId: string, userId?: string, actorId?: string) {
     // Check if computer exists and is available
     const computer = await this.prisma.computer.findUnique({
       where: { id: computerId },
@@ -38,7 +41,9 @@ export class SessionsService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      // For now, assume they have enough balance, deduct later when ending
+      if (user.status !== UserStatus.ACTIVE) {
+        throw new ConflictException('User is suspended');
+      }
     }
 
     // Get active pricing
@@ -81,10 +86,14 @@ export class SessionsService {
       },
     });
 
+    if (actorId) {
+      await this.auditService.logAction(actorId, 'SESSION_CREATED', 'Session', session.id);
+    }
+
     return session;
   }
 
-  async startSession(sessionId: string, userId?: string) {
+  async startSession(sessionId: string, userId?: string, actorId?: string) {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
       include: { computer: true },
@@ -123,16 +132,22 @@ export class SessionsService {
       },
     });
 
-    // Send UNLOCK command to PC
-    await this.socketsGateway.unlockComputer(session.computerId);
+    if (actorId) {
+      await this.auditService.logAction(actorId, 'SESSION_STARTED', 'Session', sessionId);
+    }
+
+    // Send UNLOCK command to PC (include session data for agent timer)
+    await this.socketsGateway.unlockComputer(session.computerId, {
+      session: updatedSession,
+    });
 
     return updatedSession;
   }
 
-  async endSession(sessionId: string, userId?: string) {
+  async endSession(sessionId: string, actorId?: string) {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
-      include: { computer: true, user: true },
+      include: { computer: true, user: { include: { studentProfile: true } } },
     });
 
     if (!session) {
@@ -150,20 +165,25 @@ export class SessionsService {
     const durationMinutes = Math.ceil(durationMs / 60000); // Round up to nearest minute
     const totalCost = durationMinutes * session.pricePerMinute;
 
-    // If user is present, check and deduct balance
-    if (session.userId) {
-      const user = session.user!;
-      if (user.balance < totalCost) {
-        throw new ConflictException('Insufficient balance');
-      }
-      await this.prisma.user.update({
-        where: { id: session.userId },
-        data: {
-          balance: {
-            decrement: totalCost,
+    let discountedCost = totalCost;
+    let payableAmount = totalCost;
+
+    if (session.user && session.user.role === UserRole.STUDENT) {
+      const profile = session.user.studentProfile;
+      const discountRate = profile?.discountRate ?? 0;
+      discountedCost = Math.max(0, Math.ceil(totalCost * (1 - discountRate)));
+      const balance = profile?.balance ?? 0;
+      const deduct = Math.min(balance, discountedCost);
+      payableAmount = discountedCost - deduct;
+
+      if (profile && deduct > 0) {
+        await this.prisma.studentProfile.update({
+          where: { userId: session.userId! },
+          data: {
+            balance: { decrement: deduct },
           },
-        },
-      });
+        });
+      }
     }
 
     // Update session
@@ -176,6 +196,32 @@ export class SessionsService {
       },
     });
 
+    const existingTransaction = await this.prisma.transaction.findFirst({
+      where: {
+        sessionId,
+        type: TransactionType.TIME,
+      },
+    });
+
+    if (!existingTransaction) {
+      const amount = session.user?.role === UserRole.STUDENT ? payableAmount : totalCost;
+      if (amount > 0) {
+        await this.prisma.transaction.create({
+          data: {
+            type: TransactionType.TIME,
+            referenceId: sessionId,
+            computerId: session.computerId,
+            sessionId,
+            customerId: session.userId ?? undefined,
+            createdById: actorId,
+            description: `Computer usage: ${durationMinutes} minute(s)`,
+            amount,
+            status: TransactionStatus.PENDING,
+          },
+        });
+      }
+    }
+
     // Update computer status to AVAILABLE
     await this.prisma.computer.update({
       where: { id: session.computerId },
@@ -187,10 +233,14 @@ export class SessionsService {
       data: {
         type: 'SESSION_ENDED',
         computerId: session.computerId,
-        userId,
-        payload: { sessionId, durationMinutes, totalCost },
+        userId: session.userId ?? undefined,
+        payload: { sessionId, durationMinutes, totalCost: discountedCost },
       },
     });
+
+    if (actorId) {
+      await this.auditService.logAction(actorId, 'SESSION_ENDED', 'Session', sessionId);
+    }
 
     // Notify admins (admins only)
     await this.socketsGateway.emitToAdmins('session_updated', {
@@ -217,7 +267,7 @@ export class SessionsService {
     // Send LOCK command to PC
     await this.socketsGateway.lockComputer(session.computerId);
 
-    return { updatedSession, totalCost };
+    return { updatedSession, totalCost: discountedCost, payableAmount };
   }
 
   async getActiveSession(computerId: string) {
@@ -408,7 +458,9 @@ export class SessionsService {
       where: { id: session.computerId },
       data: { status: 'IN_USE' },
     });
-    await this.socketsGateway.unlockComputer(session.computerId);
+    await this.socketsGateway.unlockComputer(session.computerId, {
+      session: updated,
+    });
 
     // Log event
     await this.prisma.event.create({
@@ -424,6 +476,15 @@ export class SessionsService {
       sessionId,
       computerId: session.computerId,
       status: 'ACTIVE',
+    });
+
+    // Notify computer (agent) with session details
+    await this.socketsGateway.emitToComputer(session.computerId, 'session_updated', {
+      sessionId,
+      computerId: session.computerId,
+      status: 'ACTIVE',
+      startedAt: updated.startedAt,
+      pausedMillis: updated.pausedMillis,
     });
 
     return updated;

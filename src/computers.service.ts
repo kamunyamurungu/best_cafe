@@ -53,14 +53,34 @@ export class ComputersService {
           },
         });
       } else {
-        result = await this.prisma.computer.create({
-          data: {
-            deviceToken: providedDeviceToken,
-            name,
-            status: ComputerStatus.AVAILABLE,
-            lastSeenAt: new Date(),
-          },
-        });
+        // If a computer exists by name, prefer updating it to use the new token
+        if (existing) {
+          const hasActive = existing.sessions?.some((s: any) => s.status === 'ACTIVE') ?? false;
+          const hasPaused = existing.sessions?.some((s: any) => s.status === 'PAUSED') ?? false;
+          result = await this.prisma.computer.update({
+            where: { id: existing.id },
+            data: {
+              deviceToken: providedDeviceToken,
+              name,
+              lastSeenAt: new Date(),
+              status: hasActive
+                ? ComputerStatus.IN_USE
+                : hasPaused
+                ? ComputerStatus.LOCKED
+                : ComputerStatus.AVAILABLE,
+            },
+          });
+        } else {
+          // No match by token or name; create new
+          result = await this.prisma.computer.create({
+            data: {
+              deviceToken: providedDeviceToken,
+              name,
+              status: ComputerStatus.AVAILABLE,
+              lastSeenAt: new Date(),
+            },
+          });
+        }
       }
     } else {
       if (existing) {
@@ -154,6 +174,8 @@ export class ComputersService {
       include: {
         sessions: {
           where: { status: { in: ['ACTIVE', 'PAUSED'] } },
+          orderBy: { startedAt: 'desc' },
+          take: 1,
         },
       },
     });
@@ -179,8 +201,9 @@ export class ComputersService {
     const hasActive = computer.sessions.some((s) => s.status === 'ACTIVE');
     const hasPaused = computer.sessions.some((s) => s.status === 'PAUSED');
     const command = hasPaused ? 'LOCK' : hasActive ? 'UNLOCK' : 'LOCK';
+    const session = computer.sessions.length > 0 ? computer.sessions[0] : null;
 
-    return { command, computerId: computer.id };
+    return { command, computerId: computer.id, session };
   }
 
   async checkOfflineComputers() {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/bloc/computers_bloc.dart';
+import '../../core/ui/error_view.dart';
 import 'computer_card.dart';
 
 class ComputersScreen extends StatelessWidget {
@@ -22,7 +23,7 @@ class ComputersScreen extends StatelessWidget {
           ),
           body: switch (state) {
             ComputersLoading() => const Center(child: CircularProgressIndicator()),
-            ComputersFailure(:final message) => Center(child: Text('Error: $message')),
+            ComputersFailure(:final message) => ErrorView(error: Exception(message)),
             ComputersLoaded(:final items) => GridView.builder(
                 padding: const EdgeInsets.all(16.0),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

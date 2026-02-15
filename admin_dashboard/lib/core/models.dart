@@ -69,10 +69,12 @@ class Computer {
   }
 
   String? get timeDisplay {
-    final started = activeSessions.isNotEmpty && activeSessions.first.startedAt != null
+    final started =
+        activeSessions.isNotEmpty && activeSessions.first.startedAt != null
         ? activeSessions.first.startedAt!
         : null;
-    final isActive = (activeSessions.isNotEmpty && activeSessions.first.status == 'ACTIVE');
+    final isActive =
+        (activeSessions.isNotEmpty && activeSessions.first.status == 'ACTIVE');
     if (started != null && isActive) {
       final duration = DateTime.now().difference(started);
       final minutes = duration.inMinutes;
@@ -143,4 +145,132 @@ class Session {
   }
 
   int get cost => totalCost ?? 0;
+}
+
+class GovService {
+  final String id;
+  final String name;
+  final String category;
+  final String officialUrl;
+  final String? description;
+  final String pricingModel;
+  final int? unitPrice;
+  final String? icon;
+  final bool isActive;
+
+  GovService({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.officialUrl,
+    this.description,
+    required this.pricingModel,
+    this.unitPrice,
+    this.icon,
+    required this.isActive,
+  });
+
+  factory GovService.fromJson(Map<String, dynamic> json) {
+    return GovService(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      category: json['category'] ?? 'OTHER',
+      officialUrl: json['officialUrl'] ?? '',
+      description: json['description'],
+      pricingModel: json['pricingModel'] ?? 'FREE',
+      unitPrice: json['unitPrice'],
+      icon: json['icon'],
+      isActive: json['isActive'] ?? true,
+    );
+  }
+
+  String get pricingBadge {
+    switch (pricingModel) {
+      case 'FREE':
+        return 'FREE';
+      case 'FLAT':
+        return 'KES ${unitPrice ?? 0}';
+      case 'PER_MINUTE':
+        return 'KES ${unitPrice ?? 0}/min';
+      default:
+        return pricingModel;
+    }
+  }
+}
+
+class GovServiceUsage {
+  final String id;
+  final String govServiceId;
+  final String staffId;
+  final DateTime startedAt;
+  final DateTime? endedAt;
+  final String? transactionId;
+  final GovService? govService;
+
+  GovServiceUsage({
+    required this.id,
+    required this.govServiceId,
+    required this.staffId,
+    required this.startedAt,
+    this.endedAt,
+    this.transactionId,
+    this.govService,
+  });
+
+  factory GovServiceUsage.fromJson(Map<String, dynamic> json) {
+    return GovServiceUsage(
+      id: json['id'] ?? '',
+      govServiceId: json['govServiceId'] ?? '',
+      staffId: json['staffId'] ?? '',
+      startedAt: DateTime.parse(json['startedAt']),
+      endedAt: json['endedAt'] != null ? DateTime.parse(json['endedAt']) : null,
+      transactionId: json['transactionId'],
+      govService: json['govService'] != null
+          ? GovService.fromJson(json['govService'])
+          : null,
+    );
+  }
+}
+
+class ShortcutItem {
+  final String id;
+  final String name;
+  final String type;
+  final String target;
+  final String? icon;
+  final String? imageUrl;
+  final int? price;
+  final bool isActive;
+
+  ShortcutItem({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.target,
+    this.icon,
+    this.imageUrl,
+    this.price,
+    required this.isActive,
+  });
+
+  factory ShortcutItem.fromJson(Map<String, dynamic> json) {
+    final priceValue = json['price'];
+    int? parsedPrice;
+    if (priceValue is int) {
+      parsedPrice = priceValue;
+    } else if (priceValue is String) {
+      parsedPrice = int.tryParse(priceValue);
+    }
+
+    return ShortcutItem(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      type: json['type'] ?? 'URL',
+      target: json['target'] ?? '',
+      icon: json['icon'],
+      imageUrl: json['imageUrl'],
+      price: parsedPrice,
+      isActive: json['isActive'] ?? true,
+    );
+  }
 }

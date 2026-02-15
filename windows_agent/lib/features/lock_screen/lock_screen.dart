@@ -7,6 +7,10 @@ import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:windows_agent/core/state/agent_state.dart';
 import '../../core/config/config.dart';
+import '../../core/log/logger.dart';
+import '../../core/errors/app_error.dart';
+import '../../core/errors/error_mapper.dart';
+import '../../core/ui/error_handler.dart';
 import '../../core/socket/socket_service.dart';
 import '../../core/state/session_summary.dart';
 
@@ -57,14 +61,19 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
   }
 
   Future<void> _loadSummary() async {
-    final summary = await SessionSummaryStore.load();
+    SessionSummary? summary;
+    try {
+      summary = await SessionSummaryStore.load();
+    } catch (e) {
+      await Logger.log('Load summary error: $e');
+    }
     if (mounted) {
       setState(() {
         _lastSummary = summary;
       });
       if (summary != null && !_summaryPopupShown) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showEndedPopup(summary);
+          _showEndedPopup(summary!);
           _summaryPopupShown = true;
         });
       }
@@ -84,62 +93,58 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-            Consumer<AgentStateNotifier>(
-              builder: (context, state, _) {
-                final color = _lockColorFor(state.state);
-                return Icon(
-                  Icons.lock,
-                  size: 100,
-                  color: color,
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Computer Locked',
-                  style: TextStyle(
-                    fontSize: 48,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                  Consumer<AgentStateNotifier>(
+                    builder: (context, state, _) {
+                      final color = _lockColorFor(state.state);
+                      return Icon(Icons.lock, size: 100, color: color);
+                    },
                   ),
-                ),
-                const SizedBox(width: 16),
-              ],
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Please pay at the counter',
-              style: TextStyle(
-                fontSize: 24,
-                color: Colors.white70,
-              ),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: _startPayPerUseSession,
-              child: const Text('Start Pay Per Use Session'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _showLogin,
-              child: const Text('Login'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _showAdminMenu,
-              child: const Text('Admin'),
-            ),
-            const SizedBox(height: 20),
-            if (_lastSummary != null) ...[
-              Text(
-                'You used the computer for ${_formatHms(_lastSummary!.seconds)} (≈ ${_lastSummary!.minutes} min), pay Ksh ${_lastSummary!.cost.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 20, color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-            ],
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Computer Locked',
+                        style: TextStyle(
+                          fontSize: 48,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Please pay at the counter',
+                    style: TextStyle(fontSize: 24, color: Colors.white70),
+                  ),
+                  const SizedBox(height: 40),
+                  ElevatedButton(
+                    onPressed: _startPayPerUseSession,
+                    child: const Text('Start Pay Per Use Session'),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _showLogin,
+                    child: const Text('Login'),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _showAdminMenu,
+                    child: const Text('Admin'),
+                  ),
+                  const SizedBox(height: 20),
+                  if (_lastSummary != null) ...[
+                    Text(
+                      'You used the computer for ${_formatHms(_lastSummary!.seconds)} (≈ ${_lastSummary!.minutes} min), pay Ksh ${_lastSummary!.cost.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        color: Colors.white70,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -202,7 +207,7 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
   }
 
   void _showLogin() {
-    final TextEditingController emailController = TextEditingController();
+    final TextEditingController identifierController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
     showDialog(
       context: context,
@@ -212,8 +217,8 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
+              controller: identifierController,
+              decoration: const InputDecoration(labelText: 'Email or Phone'),
             ),
             TextField(
               controller: passwordController,
@@ -246,18 +251,39 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
                   Uri.parse('$serverUrl/auth/login'),
                   headers: {'Content-Type': 'application/json'},
                   body: jsonEncode({
-                    'email': emailController.text,
+                    'identifier': identifierController.text,
                     'password': passwordController.text,
                   }),
                 );
-                if (response.statusCode == 200) {
-                  final data = jsonDecode(response.body);
-                  final token = data['access_token'];
+                if (response.statusCode >= 200 &&
+                    response.statusCode < 300) {
+                  Map<String, dynamic>? data;
+                  try {
+                    final decoded = jsonDecode(response.body);
+                    if (decoded is Map<String, dynamic>) {
+                      data = decoded;
+                    }
+                  } catch (e) {
+                    await Logger.log('Login JSON decode error: $e');
+                  }
+                  if (data == null || data['user'] == null) {
+                    ErrorHandler.show(
+                      context,
+                      AppError(
+                        type: AppErrorType.unknown,
+                        message: 'Login failed. Please try again.',
+                      ),
+                    );
+                    return;
+                  }
+                  final token = data['accessToken'] ?? data['access_token'];
+                  await Logger.log(
+                    'Login OK: ${token != null ? 'token received' : 'token missing'}',
+                  );
                   final userId = data['user']['id'];
-                  final balance = data['user']['balance'];
+                  final balance = data['user']['balance'] ?? 0;
                   Navigator.of(context).pop();
                   if (balance > 0) {
-                    // Auto start session
                     final startResponse = await http.post(
                       Uri.parse('$serverUrl/sessions'),
                       headers: {'Content-Type': 'application/json'},
@@ -266,29 +292,32 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
                         'userId': userId,
                       }),
                     );
-                    if (startResponse.statusCode == 201) {
+                    if (startResponse.statusCode >= 200 &&
+                        startResponse.statusCode < 300) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Session started automatically')),
+                        const SnackBar(content: Text('Session started')),
                       );
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to start session: ${startResponse.body}')),
+                      ErrorHandler.show(
+                        context,
+                        ErrorMapper.fromResponse(startResponse),
                       );
                     }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Logged in, but insufficient balance')),
+                      const SnackBar(
+                        content: Text('Logged in, but insufficient balance'),
+                      ),
                     );
                   }
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: ${response.body}')),
+                  ErrorHandler.show(
+                    context,
+                    ErrorMapper.fromResponse(response),
                   );
                 }
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
+                ErrorHandler.show(context, e);
               }
             },
             child: const Text('Login'),
@@ -361,20 +390,21 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
                     'password': passwordController.text,
                   }),
                 );
-                if (response.statusCode == 201) {
+                if (response.statusCode >= 200 && response.statusCode < 300) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Account created successfully')),
+                    const SnackBar(
+                      content: Text('Account created successfully'),
+                    ),
                   );
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: ${response.body}')),
+                  ErrorHandler.show(
+                    context,
+                    ErrorMapper.fromResponse(response),
                   );
                 }
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
+                ErrorHandler.show(context, e);
               }
             },
             child: const Text('Create'),
@@ -390,30 +420,26 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
       final response = await http.post(
         Uri.parse('$serverUrl/sessions'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'computerId': _socketService.computerId,
-        }),
+        body: jsonEncode({'computerId': _socketService.computerId}),
       );
       if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Session started')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Session started')));
         // The backend will send UNLOCK
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.body}')),
-        );
+        ErrorHandler.show(context, ErrorMapper.fromResponse(response));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ErrorHandler.show(context, e);
     }
   }
 
   void _configureServerImproved() async {
     final current = await Config.serverUrl;
-    final TextEditingController urlController = TextEditingController(text: current);
+    final TextEditingController urlController = TextEditingController(
+      text: current,
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -429,11 +455,17 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
           ),
           TextButton(
             onPressed: () async {
-              final ok = await _socketService.applyServerUrl(urlController.text);
+              final ok = await _socketService.applyServerUrl(
+                urlController.text,
+              );
               if (context.mounted) {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(ok ? 'Connected to server' : 'Failed to connect')),
+                  SnackBar(
+                    content: Text(
+                      ok ? 'Connected to server' : 'Failed to connect',
+                    ),
+                  ),
                 );
               }
             },

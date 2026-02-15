@@ -49,6 +49,9 @@ model Computer {
   sessions     Session[]
   events       Event[]
   commands     Command[]
+  printJobs    PrintJob[]
+  transactions Transaction[]
+  printers     Printer[]
 }
 
 
@@ -73,6 +76,9 @@ model Session {
   totalCost       Int?
 
   createdAt       DateTime       @default(now())
+
+  printJobs       PrintJob[]
+  transactions    Transaction[]
 }
 
 
@@ -83,12 +89,215 @@ model Pricing {
   createdAt       DateTime  @default(now())
 }
 
+model PrintPricing {
+  id           String           @id @default(uuid())
+  type         PrintPricingType
+  pricePerPage Int
+  createdAt    DateTime         @default(now())
+}
+
+model PrintJob {
+  id          String         @id @default(uuid())
+  computerId  String
+  computer    Computer       @relation(fields: [computerId], references: [id])
+  sessionId   String?
+  session     Session?       @relation(fields: [sessionId], references: [id])
+  externalJobId String?       @unique
+  spoolJobId  Int?
+  printerName String
+  pages       Int
+  isColor     Boolean
+  paperSize   String
+  cost        Int?
+  status      PrintJobStatus
+  source      PrintJobSource  @default(AGENT)
+  createdAt   DateTime       @default(now())
+
+  transaction Transaction?
+}
+
+model Printer {
+  id         String   @id @default(uuid())
+  computerId String
+  computer   Computer @relation(fields: [computerId], references: [id])
+  name       String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@unique([computerId, name])
+}
+
+model PrinterDevice {
+  id            String   @id @default(uuid())
+  name          String
+  host          String
+  community     String   @default("public")
+  scanOid       String
+  copyOid       String
+  enabled       Boolean  @default(true)
+  lastScanCount Int?
+  lastCopyCount Int?
+  createdAt     DateTime @default(now())
+
+  metrics       ScanCopyMetric[]
+}
+
+model ScanCopyMetric {
+  id         String        @id @default(uuid())
+  deviceId   String
+  device     PrinterDevice @relation(fields: [deviceId], references: [id])
+  type       MetricType
+  count      Int
+  recordedAt DateTime      @default(now())
+}
+
+model Service {
+  id           String         @id @default(uuid())
+  name         String
+  category     ServiceCategory
+  pricingModel PricingModel
+  unitPrice    Int
+  aiTemplateId String?
+  aiTemplate   AiTemplate?    @relation(fields: [aiTemplateId], references: [id])
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+
+  aiJobs       AiJob[]
+}
+
+model GovService {
+  id           String          @id @default(uuid())
+  name         String
+  category     String
+  officialUrl  String
+  description  String?
+  pricingModel GovPricingModel
+  unitPrice    Int?
+  icon         String?
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+
+  usages       GovServiceUsage[]
+}
+
+model GovServiceUsage {
+  id            String      @id @default(uuid())
+  govServiceId  String
+  staffId       String
+  startedAt     DateTime    @default(now())
+  endedAt       DateTime?
+  transactionId String?     @unique
+
+  govService    GovService  @relation(fields: [govServiceId], references: [id])
+  staff         User        @relation(fields: [staffId], references: [id])
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([staffId, endedAt])
+}
+
+model Shortcut {
+  id        String       @id @default(uuid())
+  name      String
+  type      ShortcutType
+  target    String
+  icon      String?
+  imageUrl  String?
+  price     Int?
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+}
+
+model AiTemplate {
+  id               String         @id @default(uuid())
+  name             String
+  systemPrompt     String
+  userPromptSchema Json
+  outputFormat     AiOutputFormat
+  version          Int            @default(1)
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+
+  services         Service[]
+  jobs             AiJob[]
+}
+
+model AiJob {
+  id             String      @id @default(uuid())
+  serviceId      String
+  service        Service     @relation(fields: [serviceId], references: [id])
+  templateId     String
+  template       AiTemplate  @relation(fields: [templateId], references: [id])
+  inputData      Json
+  outputText     String?
+  outputFilePath String?
+  status         AiJobStatus @default(PENDING)
+  error          String?
+  createdById    String?
+  createdBy      User?       @relation(fields: [createdById], references: [id])
+  recordId       String?     @unique
+  record         Record?     @relation(fields: [recordId], references: [id])
+  createdAt      DateTime    @default(now())
+}
+
+model Record {
+  id                   String     @id @default(uuid())
+  type                 RecordType
+  title                String
+  filePath             String
+  linkedTransactionId  String
+  linkedTransaction    Transaction @relation(fields: [linkedTransactionId], references: [id])
+  createdById          String?
+  createdBy            User?      @relation(fields: [createdById], references: [id])
+  createdAt            DateTime   @default(now())
+
+  aiJob                AiJob?
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  type        TransactionType
+  referenceId String?
+  computerId  String?
+  computer    Computer?         @relation(fields: [computerId], references: [id])
+  sessionId   String?
+  session     Session?          @relation(fields: [sessionId], references: [id])
+  printJobId  String? @unique
+  printJob    PrintJob?         @relation(fields: [printJobId], references: [id])
+  customerId  String?
+  customer    User?             @relation("TransactionCustomer", fields: [customerId], references: [id])
+  createdById String?
+  createdBy   User?             @relation("TransactionCreatedBy", fields: [createdById], references: [id])
+  description String
+  amount      Int
+  status      TransactionStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  receiptId   String?
+  receipt     Receipt?          @relation(fields: [receiptId], references: [id])
+
+  govServiceUsage GovServiceUsage?
+
+  records     Record[]
+}
+
+model Receipt {
+  id            String        @id @default(uuid())
+  totalAmount   Int
+  paymentMethod PaymentMethod
+  issuedBy      String?
+  issuedAt      DateTime      @default(now())
+
+  transactions  Transaction[]
+}
+
 
 model User {
   id           String    @id @default(uuid())
-  email        String    @unique
+  fullName     String   @default("Unknown")
+  email        String?   @unique
+  phone        String?   @unique
   passwordHash String
   role         UserRole
+  status       UserStatus @default(ACTIVE)
   balance      Int       @default(0) // Balance in cents
   cyberCenterId String?
   cyberCenter   CyberCenter? @relation(fields: [cyberCenterId], references: [id])
@@ -96,6 +305,34 @@ model User {
 
   events       Event[]
   sessions     Session[]
+  aiJobs       AiJob[]
+  records      Record[]
+  govServiceUsages GovServiceUsage[]
+  studentProfile StudentProfile?
+  auditLogs     AuditLog[]
+  transactionsAsCustomer Transaction[] @relation("TransactionCustomer")
+  transactionsCreated Transaction[] @relation("TransactionCreatedBy")
+}
+
+model StudentProfile {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  admissionNo   String?
+  balance       Int      @default(0)
+  discountRate  Float?
+
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 
@@ -143,7 +380,14 @@ enum SessionStatus {
 enum UserRole {
   ADMIN
   STAFF
+  CUSTOMER
+  STUDENT
   USER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
 }
 
 enum EventType {
@@ -160,5 +404,88 @@ enum EventType {
   COMMAND_CREATED
   COMMAND_SENT
   COMMAND_ACKED
+}
+
+enum PrintJobStatus {
+  PENDING
+  APPROVED
+  PRINTED
+  REJECTED
+}
+
+enum PrintJobSource {
+  AGENT
+  PRINT_SERVER
+}
+
+enum MetricType {
+  SCAN
+  COPY
+}
+
+enum PrintPricingType {
+  BW
+  COLOR
+}
+
+enum TransactionType {
+  TIME
+  PRINT
+  SERVICE
+  AI
+}
+
+enum ServiceCategory {
+  COMPUTER
+  PRINT
+  SERVICE
+  AI
+}
+
+enum PricingModel {
+  FLAT
+  PER_PAGE
+  PER_MINUTE
+}
+
+enum GovPricingModel {
+  FREE
+  FLAT
+  PER_MINUTE
+}
+
+enum ShortcutType {
+  URL
+  GOV_SERVICE
+  AI_SERVICE
+  INTERNAL
+}
+
+enum AiOutputFormat {
+  TEXT
+  DOCX
+  PDF
+}
+
+enum AiJobStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum RecordType {
+  AI_DOCUMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  MPESA
 }
 

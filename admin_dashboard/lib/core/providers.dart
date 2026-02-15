@@ -244,7 +244,7 @@ class SessionsNotifier extends StateNotifier<AsyncValue<List<Session>>> {
           endedAt: status == 'ENDED' ? DateTime.now() : s.endedAt,
           status: status ?? s.status,
           pricePerMinute: s.pricePerMinute,
-          totalCost: totalCost is num ? totalCost as int : s.totalCost,
+          totalCost: totalCost is num ? totalCost.toInt() : s.totalCost,
         );
       }
       return s;
@@ -260,13 +260,13 @@ class SessionsNotifier extends StateNotifier<AsyncValue<List<Session>>> {
           startedAt: null,
           endedAt: status == 'ENDED' ? DateTime.now() : null,
           pricePerMinute: 0,
-          totalCost: totalCost is num ? (totalCost as num).toInt() : null,
+          totalCost: totalCost is num ? totalCost.toInt() : null,
         ),
       );
     }
     state = AsyncValue.data(updated);
     if (status == 'ENDED' && computerId != null && totalCost is num) {
-      computers.setLastEndedCost(computerId, (totalCost as num).toInt());
+      computers.setLastEndedCost(computerId, totalCost.toInt());
       computers.updateComputerStatus(computerId, 'AVAILABLE');
     }
   }
@@ -420,29 +420,60 @@ class UsersNotifier
     }
   }
 
-  Future<void> createUser(
-    String email,
-    String password,
-    String role,
-    String? cyberCenterId,
-  ) async {
+  Future<void> createUser({
+    required String fullName,
+    required String password,
+    String? email,
+    String? phone,
+    required String role,
+    String? status,
+    String? admissionNo,
+    int? studentBalance,
+    double? discountRate,
+  }) async {
     try {
-      await _apiService.createUser(email, password, role, cyberCenterId);
+      await _apiService.createUser(
+        fullName: fullName,
+        password: password,
+        email: email,
+        phone: phone,
+        role: role,
+        status: status,
+        admissionNo: admissionNo,
+        studentBalance: studentBalance,
+        discountRate: discountRate,
+      );
       await loadUsers();
     } catch (error) {
       rethrow;
     }
   }
 
-  Future<void> updateUser(
-    String id,
+  Future<void> updateUser({
+    required String id,
+    String? fullName,
     String? email,
+    String? phone,
     String? password,
     String? role,
-    int? balance,
-  ) async {
+    String? status,
+    String? admissionNo,
+    int? studentBalance,
+    double? discountRate,
+  }) async {
     try {
-      await _apiService.updateUser(id, email, password, role, balance);
+      await _apiService.updateUser(
+        id: id,
+        fullName: fullName,
+        email: email,
+        phone: phone,
+        password: password,
+        role: role,
+        status: status,
+        admissionNo: admissionNo,
+        studentBalance: studentBalance,
+        discountRate: discountRate,
+      );
       await loadUsers();
     } catch (error) {
       rethrow;

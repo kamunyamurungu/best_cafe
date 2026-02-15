@@ -138,13 +138,189 @@ exports.Prisma.PricingScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.PrintPricingScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  pricePerPage: 'pricePerPage',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PrintJobScalarFieldEnum = {
+  id: 'id',
+  computerId: 'computerId',
+  sessionId: 'sessionId',
+  externalJobId: 'externalJobId',
+  spoolJobId: 'spoolJobId',
+  printerName: 'printerName',
+  pages: 'pages',
+  isColor: 'isColor',
+  paperSize: 'paperSize',
+  cost: 'cost',
+  status: 'status',
+  source: 'source',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PrinterScalarFieldEnum = {
+  id: 'id',
+  computerId: 'computerId',
+  name: 'name',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PrinterDeviceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  host: 'host',
+  community: 'community',
+  scanOid: 'scanOid',
+  copyOid: 'copyOid',
+  enabled: 'enabled',
+  lastScanCount: 'lastScanCount',
+  lastCopyCount: 'lastCopyCount',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ScanCopyMetricScalarFieldEnum = {
+  id: 'id',
+  deviceId: 'deviceId',
+  type: 'type',
+  count: 'count',
+  recordedAt: 'recordedAt'
+};
+
+exports.Prisma.ServiceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  category: 'category',
+  pricingModel: 'pricingModel',
+  unitPrice: 'unitPrice',
+  aiTemplateId: 'aiTemplateId',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.GovServiceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  category: 'category',
+  officialUrl: 'officialUrl',
+  description: 'description',
+  pricingModel: 'pricingModel',
+  unitPrice: 'unitPrice',
+  icon: 'icon',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.GovServiceUsageScalarFieldEnum = {
+  id: 'id',
+  govServiceId: 'govServiceId',
+  staffId: 'staffId',
+  startedAt: 'startedAt',
+  endedAt: 'endedAt',
+  transactionId: 'transactionId'
+};
+
+exports.Prisma.ShortcutScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  type: 'type',
+  target: 'target',
+  icon: 'icon',
+  imageUrl: 'imageUrl',
+  price: 'price',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AiTemplateScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  systemPrompt: 'systemPrompt',
+  userPromptSchema: 'userPromptSchema',
+  outputFormat: 'outputFormat',
+  version: 'version',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AiJobScalarFieldEnum = {
+  id: 'id',
+  serviceId: 'serviceId',
+  templateId: 'templateId',
+  inputData: 'inputData',
+  outputText: 'outputText',
+  outputFilePath: 'outputFilePath',
+  status: 'status',
+  error: 'error',
+  createdById: 'createdById',
+  recordId: 'recordId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.RecordScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  title: 'title',
+  filePath: 'filePath',
+  linkedTransactionId: 'linkedTransactionId',
+  createdById: 'createdById',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.TransactionScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  referenceId: 'referenceId',
+  computerId: 'computerId',
+  sessionId: 'sessionId',
+  printJobId: 'printJobId',
+  customerId: 'customerId',
+  createdById: 'createdById',
+  description: 'description',
+  amount: 'amount',
+  status: 'status',
+  createdAt: 'createdAt',
+  receiptId: 'receiptId'
+};
+
+exports.Prisma.ReceiptScalarFieldEnum = {
+  id: 'id',
+  totalAmount: 'totalAmount',
+  paymentMethod: 'paymentMethod',
+  issuedBy: 'issuedBy',
+  issuedAt: 'issuedAt'
+};
+
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
+  fullName: 'fullName',
   email: 'email',
+  phone: 'phone',
   passwordHash: 'passwordHash',
   role: 'role',
+  status: 'status',
   balance: 'balance',
   cyberCenterId: 'cyberCenterId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.StudentProfileScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  admissionNo: 'admissionNo',
+  balance: 'balance',
+  discountRate: 'discountRate'
+};
+
+exports.Prisma.AuditLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  action: 'action',
+  entity: 'entity',
+  entityId: 'entityId',
   createdAt: 'createdAt'
 };
 
@@ -170,6 +346,10 @@ exports.Prisma.CommandScalarFieldEnum = {
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.NullableJsonNullValueInput = {
@@ -210,7 +390,14 @@ exports.SessionStatus = exports.$Enums.SessionStatus = {
 exports.UserRole = exports.$Enums.UserRole = {
   ADMIN: 'ADMIN',
   STAFF: 'STAFF',
+  CUSTOMER: 'CUSTOMER',
+  STUDENT: 'STUDENT',
   USER: 'USER'
+};
+
+exports.UserStatus = exports.$Enums.UserStatus = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED'
 };
 
 exports.EventType = exports.$Enums.EventType = {
@@ -229,13 +416,112 @@ exports.EventType = exports.$Enums.EventType = {
   COMMAND_ACKED: 'COMMAND_ACKED'
 };
 
+exports.PrintJobStatus = exports.$Enums.PrintJobStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  PRINTED: 'PRINTED',
+  REJECTED: 'REJECTED'
+};
+
+exports.PrintJobSource = exports.$Enums.PrintJobSource = {
+  AGENT: 'AGENT',
+  PRINT_SERVER: 'PRINT_SERVER'
+};
+
+exports.MetricType = exports.$Enums.MetricType = {
+  SCAN: 'SCAN',
+  COPY: 'COPY'
+};
+
+exports.PrintPricingType = exports.$Enums.PrintPricingType = {
+  BW: 'BW',
+  COLOR: 'COLOR'
+};
+
+exports.TransactionType = exports.$Enums.TransactionType = {
+  TIME: 'TIME',
+  PRINT: 'PRINT',
+  SERVICE: 'SERVICE',
+  AI: 'AI'
+};
+
+exports.ServiceCategory = exports.$Enums.ServiceCategory = {
+  COMPUTER: 'COMPUTER',
+  PRINT: 'PRINT',
+  SERVICE: 'SERVICE',
+  AI: 'AI'
+};
+
+exports.PricingModel = exports.$Enums.PricingModel = {
+  FLAT: 'FLAT',
+  PER_PAGE: 'PER_PAGE',
+  PER_MINUTE: 'PER_MINUTE'
+};
+
+exports.GovPricingModel = exports.$Enums.GovPricingModel = {
+  FREE: 'FREE',
+  FLAT: 'FLAT',
+  PER_MINUTE: 'PER_MINUTE'
+};
+
+exports.ShortcutType = exports.$Enums.ShortcutType = {
+  URL: 'URL',
+  GOV_SERVICE: 'GOV_SERVICE',
+  AI_SERVICE: 'AI_SERVICE',
+  INTERNAL: 'INTERNAL'
+};
+
+exports.AiOutputFormat = exports.$Enums.AiOutputFormat = {
+  TEXT: 'TEXT',
+  DOCX: 'DOCX',
+  PDF: 'PDF'
+};
+
+exports.AiJobStatus = exports.$Enums.AiJobStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  DONE: 'DONE',
+  FAILED: 'FAILED'
+};
+
+exports.RecordType = exports.$Enums.RecordType = {
+  AI_DOCUMENT: 'AI_DOCUMENT'
+};
+
+exports.TransactionStatus = exports.$Enums.TransactionStatus = {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.PaymentMethod = exports.$Enums.PaymentMethod = {
+  CASH: 'CASH',
+  MPESA: 'MPESA'
+};
+
 exports.Prisma.ModelName = {
   Organization: 'Organization',
   CyberCenter: 'CyberCenter',
   Computer: 'Computer',
   Session: 'Session',
   Pricing: 'Pricing',
+  PrintPricing: 'PrintPricing',
+  PrintJob: 'PrintJob',
+  Printer: 'Printer',
+  PrinterDevice: 'PrinterDevice',
+  ScanCopyMetric: 'ScanCopyMetric',
+  Service: 'Service',
+  GovService: 'GovService',
+  GovServiceUsage: 'GovServiceUsage',
+  Shortcut: 'Shortcut',
+  AiTemplate: 'AiTemplate',
+  AiJob: 'AiJob',
+  Record: 'Record',
+  Transaction: 'Transaction',
+  Receipt: 'Receipt',
   User: 'User',
+  StudentProfile: 'StudentProfile',
+  AuditLog: 'AuditLog',
   Event: 'Event',
   Command: 'Command'
 };
@@ -247,10 +533,10 @@ const config = {
   "clientVersion": "7.3.0",
   "engineVersion": "9d6ad21cbbceab97458517b147a6a09ff43aa735",
   "activeProvider": "postgresql",
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider   = \"prisma-client-js\"\n  output     = \"../src/generated/prisma\"\n  engineType = \"binary\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel Organization {\n  id        String   @id @default(cuid())\n  name      String\n  createdAt DateTime @default(now())\n\n  cyberCenters CyberCenter[]\n}\n\nmodel CyberCenter {\n  id             String       @id @default(cuid())\n  name           String\n  location       String?\n  organizationId String\n  organization   Organization @relation(fields: [organizationId], references: [id])\n\n  computers Computer[]\n  sessions  Session[]\n  users     User[]\n\n  createdAt DateTime @default(now())\n}\n\nmodel Computer {\n  id            String         @id @default(uuid())\n  name          String\n  deviceToken   String         @unique\n  status        ComputerStatus\n  lastSeenAt    DateTime?\n  cyberCenterId String?\n  cyberCenter   CyberCenter?   @relation(fields: [cyberCenterId], references: [id])\n  createdAt     DateTime       @default(now())\n\n  sessions Session[]\n  events   Event[]\n  commands Command[]\n}\n\nmodel Session {\n  id         String   @id @default(uuid())\n  computerId String\n  computer   Computer @relation(fields: [computerId], references: [id])\n\n  cyberCenterId String?\n  cyberCenter   CyberCenter? @relation(fields: [cyberCenterId], references: [id])\n\n  userId String?\n  user   User?   @relation(fields: [userId], references: [id])\n\n  startedAt    DateTime?\n  endedAt      DateTime?\n  status       SessionStatus\n  pausedAt     DateTime?\n  pausedMillis Int           @default(0)\n\n  pricePerMinute Int\n  totalCost      Int?\n\n  createdAt DateTime @default(now())\n}\n\nmodel Pricing {\n  id             String   @id @default(uuid())\n  pricePerMinute Int\n  active         Boolean  @default(false)\n  createdAt      DateTime @default(now())\n}\n\nmodel User {\n  id            String       @id @default(uuid())\n  email         String       @unique\n  passwordHash  String\n  role          UserRole\n  balance       Int          @default(0) // Balance in cents\n  cyberCenterId String?\n  cyberCenter   CyberCenter? @relation(fields: [cyberCenterId], references: [id])\n  createdAt     DateTime     @default(now())\n\n  events   Event[]\n  sessions Session[]\n}\n\nmodel Event {\n  id        String    @id @default(uuid())\n  type      EventType\n  payload   Json?\n  createdAt DateTime  @default(now())\n\n  userId String?\n  user   User?   @relation(fields: [userId], references: [id])\n\n  computerId String?\n  computer   Computer? @relation(fields: [computerId], references: [id])\n}\n\nmodel Command {\n  id         String    @id @default(cuid())\n  computerId String\n  computer   Computer  @relation(fields: [computerId], references: [id])\n  type       String\n  status     String    @default(\"PENDING\")\n  createdAt  DateTime  @default(now())\n  sentAt     DateTime?\n  ackedAt    DateTime?\n}\n\nenum ComputerStatus {\n  AVAILABLE\n  IN_USE\n  LOCKED\n  OFFLINE\n  ERROR\n}\n\nenum SessionStatus {\n  CREATED\n  ACTIVE\n  PAUSED\n  ENDED\n}\n\nenum UserRole {\n  ADMIN\n  STAFF\n  USER\n}\n\nenum EventType {\n  COMPUTER_CONNECTED\n  COMPUTER_DISCONNECTED\n  COMPUTER_STATUS_CHANGED\n  SESSION_STARTED\n  SESSION_ACTIVATED\n  SESSION_PAUSED\n  SESSION_RESUMED\n  SESSION_ENDED\n  USER_LOGIN\n  USER_LOGOUT\n  COMMAND_CREATED\n  COMMAND_SENT\n  COMMAND_ACKED\n}\n"
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider   = \"prisma-client-js\"\n  output     = \"../src/generated/prisma\"\n  engineType = \"binary\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel Organization {\n  id        String   @id @default(cuid())\n  name      String\n  createdAt DateTime @default(now())\n\n  cyberCenters CyberCenter[]\n}\n\nmodel CyberCenter {\n  id             String       @id @default(cuid())\n  name           String\n  location       String?\n  organizationId String\n  organization   Organization @relation(fields: [organizationId], references: [id])\n\n  computers Computer[]\n  sessions  Session[]\n  users     User[]\n\n  createdAt DateTime @default(now())\n}\n\nmodel Computer {\n  id            String         @id @default(uuid())\n  name          String\n  deviceToken   String         @unique\n  status        ComputerStatus\n  lastSeenAt    DateTime?\n  cyberCenterId String?\n  cyberCenter   CyberCenter?   @relation(fields: [cyberCenterId], references: [id])\n  createdAt     DateTime       @default(now())\n\n  sessions     Session[]\n  events       Event[]\n  commands     Command[]\n  printJobs    PrintJob[]\n  transactions Transaction[]\n  printers     Printer[]\n}\n\nmodel Session {\n  id         String   @id @default(uuid())\n  computerId String\n  computer   Computer @relation(fields: [computerId], references: [id])\n\n  cyberCenterId String?\n  cyberCenter   CyberCenter? @relation(fields: [cyberCenterId], references: [id])\n\n  userId String?\n  user   User?   @relation(fields: [userId], references: [id])\n\n  startedAt    DateTime?\n  endedAt      DateTime?\n  status       SessionStatus\n  pausedAt     DateTime?\n  pausedMillis Int           @default(0)\n\n  pricePerMinute Int\n  totalCost      Int?\n\n  createdAt DateTime @default(now())\n\n  printJobs    PrintJob[]\n  transactions Transaction[]\n}\n\nmodel Pricing {\n  id             String   @id @default(uuid())\n  pricePerMinute Int\n  active         Boolean  @default(false)\n  createdAt      DateTime @default(now())\n}\n\nmodel PrintPricing {\n  id           String           @id @default(uuid())\n  type         PrintPricingType\n  pricePerPage Int\n  createdAt    DateTime         @default(now())\n}\n\nmodel PrintJob {\n  id            String         @id @default(uuid())\n  computerId    String\n  computer      Computer       @relation(fields: [computerId], references: [id])\n  sessionId     String?\n  session       Session?       @relation(fields: [sessionId], references: [id])\n  externalJobId String?        @unique\n  spoolJobId    Int?\n  printerName   String\n  pages         Int\n  isColor       Boolean\n  paperSize     String\n  cost          Int?\n  status        PrintJobStatus\n  source        PrintJobSource @default(AGENT)\n  createdAt     DateTime       @default(now())\n\n  transaction Transaction?\n}\n\nmodel Printer {\n  id         String   @id @default(uuid())\n  computerId String\n  computer   Computer @relation(fields: [computerId], references: [id])\n  name       String\n  isDefault  Boolean  @default(false)\n  createdAt  DateTime @default(now())\n\n  @@unique([computerId, name])\n}\n\nmodel PrinterDevice {\n  id            String   @id @default(uuid())\n  name          String\n  host          String\n  community     String   @default(\"public\")\n  scanOid       String\n  copyOid       String\n  enabled       Boolean  @default(true)\n  lastScanCount Int?\n  lastCopyCount Int?\n  createdAt     DateTime @default(now())\n\n  metrics ScanCopyMetric[]\n}\n\nmodel ScanCopyMetric {\n  id         String        @id @default(uuid())\n  deviceId   String\n  device     PrinterDevice @relation(fields: [deviceId], references: [id])\n  type       MetricType\n  count      Int\n  recordedAt DateTime      @default(now())\n}\n\nmodel Service {\n  id           String          @id @default(uuid())\n  name         String\n  category     ServiceCategory\n  pricingModel PricingModel\n  unitPrice    Int\n  aiTemplateId String?\n  aiTemplate   AiTemplate?     @relation(fields: [aiTemplateId], references: [id])\n  isActive     Boolean         @default(true)\n  createdAt    DateTime        @default(now())\n\n  aiJobs AiJob[]\n}\n\nmodel GovService {\n  id           String          @id @default(uuid())\n  name         String\n  category     String\n  officialUrl  String\n  description  String?\n  pricingModel GovPricingModel\n  unitPrice    Int?\n  icon         String?\n  isActive     Boolean         @default(true)\n  createdAt    DateTime        @default(now())\n\n  usages GovServiceUsage[]\n}\n\nmodel GovServiceUsage {\n  id            String    @id @default(uuid())\n  govServiceId  String\n  staffId       String\n  startedAt     DateTime  @default(now())\n  endedAt       DateTime?\n  transactionId String?   @unique\n\n  govService  GovService   @relation(fields: [govServiceId], references: [id])\n  staff       User         @relation(fields: [staffId], references: [id])\n  transaction Transaction? @relation(fields: [transactionId], references: [id])\n\n  @@index([staffId, endedAt])\n}\n\nmodel Shortcut {\n  id        String       @id @default(uuid())\n  name      String\n  type      ShortcutType\n  target    String\n  icon      String?\n  imageUrl  String?\n  price     Int?\n  isActive  Boolean      @default(true)\n  createdAt DateTime     @default(now())\n}\n\nmodel AiTemplate {\n  id               String         @id @default(uuid())\n  name             String\n  systemPrompt     String\n  userPromptSchema Json\n  outputFormat     AiOutputFormat\n  version          Int            @default(1)\n  isActive         Boolean        @default(true)\n  createdAt        DateTime       @default(now())\n\n  services Service[]\n  jobs     AiJob[]\n}\n\nmodel AiJob {\n  id             String      @id @default(uuid())\n  serviceId      String\n  service        Service     @relation(fields: [serviceId], references: [id])\n  templateId     String\n  template       AiTemplate  @relation(fields: [templateId], references: [id])\n  inputData      Json\n  outputText     String?\n  outputFilePath String?\n  status         AiJobStatus @default(PENDING)\n  error          String?\n  createdById    String?\n  createdBy      User?       @relation(fields: [createdById], references: [id])\n  recordId       String?     @unique\n  record         Record?     @relation(fields: [recordId], references: [id])\n  createdAt      DateTime    @default(now())\n}\n\nmodel Record {\n  id                  String      @id @default(uuid())\n  type                RecordType\n  title               String\n  filePath            String\n  linkedTransactionId String\n  linkedTransaction   Transaction @relation(fields: [linkedTransactionId], references: [id])\n  createdById         String?\n  createdBy           User?       @relation(fields: [createdById], references: [id])\n  createdAt           DateTime    @default(now())\n\n  aiJob AiJob?\n}\n\nmodel Transaction {\n  id          String            @id @default(uuid())\n  type        TransactionType\n  referenceId String?\n  computerId  String?\n  computer    Computer?         @relation(fields: [computerId], references: [id])\n  sessionId   String?\n  session     Session?          @relation(fields: [sessionId], references: [id])\n  printJobId  String?           @unique\n  printJob    PrintJob?         @relation(fields: [printJobId], references: [id])\n  customerId  String?\n  customer    User?             @relation(\"TransactionCustomer\", fields: [customerId], references: [id])\n  createdById String?\n  createdBy   User?             @relation(\"TransactionCreatedBy\", fields: [createdById], references: [id])\n  description String\n  amount      Int\n  status      TransactionStatus @default(PENDING)\n  createdAt   DateTime          @default(now())\n  receiptId   String?\n  receipt     Receipt?          @relation(fields: [receiptId], references: [id])\n\n  govServiceUsage GovServiceUsage?\n\n  records Record[]\n}\n\nmodel Receipt {\n  id            String        @id @default(uuid())\n  totalAmount   Int\n  paymentMethod PaymentMethod\n  issuedBy      String?\n  issuedAt      DateTime      @default(now())\n\n  transactions Transaction[]\n}\n\nmodel User {\n  id            String       @id @default(uuid())\n  fullName      String       @default(\"Unknown\")\n  email         String?      @unique\n  phone         String?      @unique\n  passwordHash  String\n  role          UserRole\n  status        UserStatus   @default(ACTIVE)\n  balance       Int          @default(0) // Balance in cents\n  cyberCenterId String?\n  cyberCenter   CyberCenter? @relation(fields: [cyberCenterId], references: [id])\n  createdAt     DateTime     @default(now())\n\n  events                 Event[]\n  sessions               Session[]\n  aiJobs                 AiJob[]\n  records                Record[]\n  govServiceUsages       GovServiceUsage[]\n  studentProfile         StudentProfile?\n  auditLogs              AuditLog[]\n  transactionsAsCustomer Transaction[]     @relation(\"TransactionCustomer\")\n  transactionsCreated    Transaction[]     @relation(\"TransactionCreatedBy\")\n}\n\nmodel StudentProfile {\n  id           String  @id @default(uuid())\n  userId       String  @unique\n  admissionNo  String?\n  balance      Int     @default(0)\n  discountRate Float?\n\n  user User @relation(fields: [userId], references: [id])\n}\n\nmodel AuditLog {\n  id        String   @id @default(uuid())\n  userId    String\n  action    String\n  entity    String\n  entityId  String?\n  createdAt DateTime @default(now())\n\n  user User @relation(fields: [userId], references: [id])\n}\n\nmodel Event {\n  id        String    @id @default(uuid())\n  type      EventType\n  payload   Json?\n  createdAt DateTime  @default(now())\n\n  userId String?\n  user   User?   @relation(fields: [userId], references: [id])\n\n  computerId String?\n  computer   Computer? @relation(fields: [computerId], references: [id])\n}\n\nmodel Command {\n  id         String    @id @default(cuid())\n  computerId String\n  computer   Computer  @relation(fields: [computerId], references: [id])\n  type       String\n  status     String    @default(\"PENDING\")\n  createdAt  DateTime  @default(now())\n  sentAt     DateTime?\n  ackedAt    DateTime?\n}\n\nenum ComputerStatus {\n  AVAILABLE\n  IN_USE\n  LOCKED\n  OFFLINE\n  ERROR\n}\n\nenum SessionStatus {\n  CREATED\n  ACTIVE\n  PAUSED\n  ENDED\n}\n\nenum UserRole {\n  ADMIN\n  STAFF\n  CUSTOMER\n  STUDENT\n  USER\n}\n\nenum UserStatus {\n  ACTIVE\n  SUSPENDED\n}\n\nenum EventType {\n  COMPUTER_CONNECTED\n  COMPUTER_DISCONNECTED\n  COMPUTER_STATUS_CHANGED\n  SESSION_STARTED\n  SESSION_ACTIVATED\n  SESSION_PAUSED\n  SESSION_RESUMED\n  SESSION_ENDED\n  USER_LOGIN\n  USER_LOGOUT\n  COMMAND_CREATED\n  COMMAND_SENT\n  COMMAND_ACKED\n}\n\nenum PrintJobStatus {\n  PENDING\n  APPROVED\n  PRINTED\n  REJECTED\n}\n\nenum PrintJobSource {\n  AGENT\n  PRINT_SERVER\n}\n\nenum MetricType {\n  SCAN\n  COPY\n}\n\nenum PrintPricingType {\n  BW\n  COLOR\n}\n\nenum TransactionType {\n  TIME\n  PRINT\n  SERVICE\n  AI\n}\n\nenum ServiceCategory {\n  COMPUTER\n  PRINT\n  SERVICE\n  AI\n}\n\nenum PricingModel {\n  FLAT\n  PER_PAGE\n  PER_MINUTE\n}\n\nenum GovPricingModel {\n  FREE\n  FLAT\n  PER_MINUTE\n}\n\nenum ShortcutType {\n  URL\n  GOV_SERVICE\n  AI_SERVICE\n  INTERNAL\n}\n\nenum AiOutputFormat {\n  TEXT\n  DOCX\n  PDF\n}\n\nenum AiJobStatus {\n  PENDING\n  PROCESSING\n  DONE\n  FAILED\n}\n\nenum RecordType {\n  AI_DOCUMENT\n}\n\nenum TransactionStatus {\n  PENDING\n  PAID\n  CANCELLED\n}\n\nenum PaymentMethod {\n  CASH\n  MPESA\n}\n"
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Organization\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"cyberCenters\",\"kind\":\"object\",\"type\":\"CyberCenter\",\"relationName\":\"CyberCenterToOrganization\"}],\"dbName\":null},\"CyberCenter\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"organizationId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"organization\",\"kind\":\"object\",\"type\":\"Organization\",\"relationName\":\"CyberCenterToOrganization\"},{\"name\":\"computers\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"ComputerToCyberCenter\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"CyberCenterToSession\"},{\"name\":\"users\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"CyberCenterToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Computer\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"deviceToken\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"ComputerStatus\"},{\"name\":\"lastSeenAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"cyberCenterId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cyberCenter\",\"kind\":\"object\",\"type\":\"CyberCenter\",\"relationName\":\"ComputerToCyberCenter\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"ComputerToSession\"},{\"name\":\"events\",\"kind\":\"object\",\"type\":\"Event\",\"relationName\":\"ComputerToEvent\"},{\"name\":\"commands\",\"kind\":\"object\",\"type\":\"Command\",\"relationName\":\"CommandToComputer\"}],\"dbName\":null},\"Session\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computer\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"ComputerToSession\"},{\"name\":\"cyberCenterId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cyberCenter\",\"kind\":\"object\",\"type\":\"CyberCenter\",\"relationName\":\"CyberCenterToSession\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"SessionToUser\"},{\"name\":\"startedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"SessionStatus\"},{\"name\":\"pausedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"pausedMillis\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"pricePerMinute\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"totalCost\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Pricing\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"pricePerMinute\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"UserRole\"},{\"name\":\"balance\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"cyberCenterId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cyberCenter\",\"kind\":\"object\",\"type\":\"CyberCenter\",\"relationName\":\"CyberCenterToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"events\",\"kind\":\"object\",\"type\":\"Event\",\"relationName\":\"EventToUser\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"SessionToUser\"}],\"dbName\":null},\"Event\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"EventType\"},{\"name\":\"payload\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"EventToUser\"},{\"name\":\"computerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computer\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"ComputerToEvent\"}],\"dbName\":null},\"Command\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computer\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"CommandToComputer\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"sentAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"ackedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Organization\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"cyberCenters\",\"kind\":\"object\",\"type\":\"CyberCenter\",\"relationName\":\"CyberCenterToOrganization\"}],\"dbName\":null},\"CyberCenter\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"organizationId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"organization\",\"kind\":\"object\",\"type\":\"Organization\",\"relationName\":\"CyberCenterToOrganization\"},{\"name\":\"computers\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"ComputerToCyberCenter\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"CyberCenterToSession\"},{\"name\":\"users\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"CyberCenterToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Computer\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"deviceToken\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"ComputerStatus\"},{\"name\":\"lastSeenAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"cyberCenterId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cyberCenter\",\"kind\":\"object\",\"type\":\"CyberCenter\",\"relationName\":\"ComputerToCyberCenter\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"ComputerToSession\"},{\"name\":\"events\",\"kind\":\"object\",\"type\":\"Event\",\"relationName\":\"ComputerToEvent\"},{\"name\":\"commands\",\"kind\":\"object\",\"type\":\"Command\",\"relationName\":\"CommandToComputer\"},{\"name\":\"printJobs\",\"kind\":\"object\",\"type\":\"PrintJob\",\"relationName\":\"ComputerToPrintJob\"},{\"name\":\"transactions\",\"kind\":\"object\",\"type\":\"Transaction\",\"relationName\":\"ComputerToTransaction\"},{\"name\":\"printers\",\"kind\":\"object\",\"type\":\"Printer\",\"relationName\":\"ComputerToPrinter\"}],\"dbName\":null},\"Session\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computer\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"ComputerToSession\"},{\"name\":\"cyberCenterId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cyberCenter\",\"kind\":\"object\",\"type\":\"CyberCenter\",\"relationName\":\"CyberCenterToSession\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"SessionToUser\"},{\"name\":\"startedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"SessionStatus\"},{\"name\":\"pausedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"pausedMillis\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"pricePerMinute\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"totalCost\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"printJobs\",\"kind\":\"object\",\"type\":\"PrintJob\",\"relationName\":\"PrintJobToSession\"},{\"name\":\"transactions\",\"kind\":\"object\",\"type\":\"Transaction\",\"relationName\":\"SessionToTransaction\"}],\"dbName\":null},\"Pricing\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"pricePerMinute\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"PrintPricing\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"PrintPricingType\"},{\"name\":\"pricePerPage\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"PrintJob\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computer\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"ComputerToPrintJob\"},{\"name\":\"sessionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"session\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"PrintJobToSession\"},{\"name\":\"externalJobId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"spoolJobId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"printerName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"pages\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"isColor\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"paperSize\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cost\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"PrintJobStatus\"},{\"name\":\"source\",\"kind\":\"enum\",\"type\":\"PrintJobSource\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"transaction\",\"kind\":\"object\",\"type\":\"Transaction\",\"relationName\":\"PrintJobToTransaction\"}],\"dbName\":null},\"Printer\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computer\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"ComputerToPrinter\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isDefault\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"PrinterDevice\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"host\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"community\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"scanOid\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"copyOid\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"enabled\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"lastScanCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"lastCopyCount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"metrics\",\"kind\":\"object\",\"type\":\"ScanCopyMetric\",\"relationName\":\"PrinterDeviceToScanCopyMetric\"}],\"dbName\":null},\"ScanCopyMetric\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"deviceId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"device\",\"kind\":\"object\",\"type\":\"PrinterDevice\",\"relationName\":\"PrinterDeviceToScanCopyMetric\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"MetricType\"},{\"name\":\"count\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"recordedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Service\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"category\",\"kind\":\"enum\",\"type\":\"ServiceCategory\"},{\"name\":\"pricingModel\",\"kind\":\"enum\",\"type\":\"PricingModel\"},{\"name\":\"unitPrice\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"aiTemplateId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"aiTemplate\",\"kind\":\"object\",\"type\":\"AiTemplate\",\"relationName\":\"AiTemplateToService\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"aiJobs\",\"kind\":\"object\",\"type\":\"AiJob\",\"relationName\":\"AiJobToService\"}],\"dbName\":null},\"GovService\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"officialUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"pricingModel\",\"kind\":\"enum\",\"type\":\"GovPricingModel\"},{\"name\":\"unitPrice\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"icon\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"usages\",\"kind\":\"object\",\"type\":\"GovServiceUsage\",\"relationName\":\"GovServiceToGovServiceUsage\"}],\"dbName\":null},\"GovServiceUsage\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"govServiceId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"staffId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"endedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"transactionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"govService\",\"kind\":\"object\",\"type\":\"GovService\",\"relationName\":\"GovServiceToGovServiceUsage\"},{\"name\":\"staff\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"GovServiceUsageToUser\"},{\"name\":\"transaction\",\"kind\":\"object\",\"type\":\"Transaction\",\"relationName\":\"GovServiceUsageToTransaction\"}],\"dbName\":null},\"Shortcut\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"ShortcutType\"},{\"name\":\"target\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"icon\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"imageUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"price\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"AiTemplate\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"systemPrompt\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userPromptSchema\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"outputFormat\",\"kind\":\"enum\",\"type\":\"AiOutputFormat\"},{\"name\":\"version\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"services\",\"kind\":\"object\",\"type\":\"Service\",\"relationName\":\"AiTemplateToService\"},{\"name\":\"jobs\",\"kind\":\"object\",\"type\":\"AiJob\",\"relationName\":\"AiJobToAiTemplate\"}],\"dbName\":null},\"AiJob\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"serviceId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"service\",\"kind\":\"object\",\"type\":\"Service\",\"relationName\":\"AiJobToService\"},{\"name\":\"templateId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"template\",\"kind\":\"object\",\"type\":\"AiTemplate\",\"relationName\":\"AiJobToAiTemplate\"},{\"name\":\"inputData\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"outputText\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"outputFilePath\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"AiJobStatus\"},{\"name\":\"error\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdById\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdBy\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"AiJobToUser\"},{\"name\":\"recordId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"record\",\"kind\":\"object\",\"type\":\"Record\",\"relationName\":\"AiJobToRecord\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Record\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"RecordType\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"filePath\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"linkedTransactionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"linkedTransaction\",\"kind\":\"object\",\"type\":\"Transaction\",\"relationName\":\"RecordToTransaction\"},{\"name\":\"createdById\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdBy\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"RecordToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"aiJob\",\"kind\":\"object\",\"type\":\"AiJob\",\"relationName\":\"AiJobToRecord\"}],\"dbName\":null},\"Transaction\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"TransactionType\"},{\"name\":\"referenceId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computer\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"ComputerToTransaction\"},{\"name\":\"sessionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"session\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"SessionToTransaction\"},{\"name\":\"printJobId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"printJob\",\"kind\":\"object\",\"type\":\"PrintJob\",\"relationName\":\"PrintJobToTransaction\"},{\"name\":\"customerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"customer\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TransactionCustomer\"},{\"name\":\"createdById\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdBy\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TransactionCreatedBy\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"amount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"TransactionStatus\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"receiptId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"receipt\",\"kind\":\"object\",\"type\":\"Receipt\",\"relationName\":\"ReceiptToTransaction\"},{\"name\":\"govServiceUsage\",\"kind\":\"object\",\"type\":\"GovServiceUsage\",\"relationName\":\"GovServiceUsageToTransaction\"},{\"name\":\"records\",\"kind\":\"object\",\"type\":\"Record\",\"relationName\":\"RecordToTransaction\"}],\"dbName\":null},\"Receipt\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"totalAmount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"paymentMethod\",\"kind\":\"enum\",\"type\":\"PaymentMethod\"},{\"name\":\"issuedBy\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"issuedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"transactions\",\"kind\":\"object\",\"type\":\"Transaction\",\"relationName\":\"ReceiptToTransaction\"}],\"dbName\":null},\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"fullName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"UserRole\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"UserStatus\"},{\"name\":\"balance\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"cyberCenterId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cyberCenter\",\"kind\":\"object\",\"type\":\"CyberCenter\",\"relationName\":\"CyberCenterToUser\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"events\",\"kind\":\"object\",\"type\":\"Event\",\"relationName\":\"EventToUser\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"SessionToUser\"},{\"name\":\"aiJobs\",\"kind\":\"object\",\"type\":\"AiJob\",\"relationName\":\"AiJobToUser\"},{\"name\":\"records\",\"kind\":\"object\",\"type\":\"Record\",\"relationName\":\"RecordToUser\"},{\"name\":\"govServiceUsages\",\"kind\":\"object\",\"type\":\"GovServiceUsage\",\"relationName\":\"GovServiceUsageToUser\"},{\"name\":\"studentProfile\",\"kind\":\"object\",\"type\":\"StudentProfile\",\"relationName\":\"StudentProfileToUser\"},{\"name\":\"auditLogs\",\"kind\":\"object\",\"type\":\"AuditLog\",\"relationName\":\"AuditLogToUser\"},{\"name\":\"transactionsAsCustomer\",\"kind\":\"object\",\"type\":\"Transaction\",\"relationName\":\"TransactionCustomer\"},{\"name\":\"transactionsCreated\",\"kind\":\"object\",\"type\":\"Transaction\",\"relationName\":\"TransactionCreatedBy\"}],\"dbName\":null},\"StudentProfile\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"admissionNo\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"balance\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"discountRate\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"StudentProfileToUser\"}],\"dbName\":null},\"AuditLog\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"action\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"entity\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"entityId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"AuditLogToUser\"}],\"dbName\":null},\"Event\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"EventType\"},{\"name\":\"payload\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"EventToUser\"},{\"name\":\"computerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computer\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"ComputerToEvent\"}],\"dbName\":null},\"Command\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"computer\",\"kind\":\"object\",\"type\":\"Computer\",\"relationName\":\"CommandToComputer\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"sentAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"ackedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.compilerWasm = {
   getRuntime: async () => require('./query_compiler_fast_bg.js'),

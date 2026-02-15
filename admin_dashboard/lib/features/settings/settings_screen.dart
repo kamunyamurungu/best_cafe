@@ -2,39 +2,74 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
 import '../../core/models.dart';
+import '../../core/api_service.dart';
 import '../../core/config_service.dart';
+import '../../core/ui/error_handler.dart';
+import '../../core/ui/error_view.dart';
+import '../../core/errors/app_error.dart';
+import '../snmp/snmp_screen.dart';
+import '../users/users_screen.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  final ApiService _api = ApiService();
+  late Future<List<ShortcutItem>> _shortcutsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _shortcutsFuture = _loadShortcuts();
+  }
+
+  Future<List<ShortcutItem>> _loadShortcuts() async {
+    final items = await _api.getShortcuts();
+    return items.map((e) => ShortcutItem.fromJson(e)).toList();
+  }
+
+  void _refreshShortcuts() {
+    setState(() {
+      _shortcutsFuture = _loadShortcuts();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final pricingsAsync = ref.watch(pricingsProvider);
     final computersAsync = ref.watch(computersProvider);
     final cyberCentersAsync = ref.watch(cyberCentersProvider);
-    final usersAsync = ref.watch(usersProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
+      appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
           _buildServerSettingsSection(context),
+          _buildAiSettingsSection(context),
+          _buildSnmpSettingsSection(context),
           _buildSection('Pricing', [
             pricingsAsync.when(
               loading: () => const CircularProgressIndicator(),
-              error: (error, stack) => Text('Error: $error'),
+              error: (error, stack) => ErrorView(error: error),
               data: (pricings) => Column(
                 children: [
-                  ...pricings.map((pricing) => ListTile(
-                    title: Text('Price per minute: KES ${pricing['pricePerMinute']}'),
-                    subtitle: Text('Active: ${pricing['active']}'),
-                    trailing: ElevatedButton(
-                      onPressed: () => _showUpdatePricingDialog(context, ref, pricing),
-                      child: const Text('UPDATE'),
+                  ...pricings.map(
+                    (pricing) => ListTile(
+                      title: Text(
+                        'Price per minute: KES ${pricing['pricePerMinute']}',
+                      ),
+                      subtitle: Text('Active: ${pricing['active']}'),
+                      trailing: ElevatedButton(
+                        onPressed: () =>
+                            _showUpdatePricingDialog(context, ref, pricing),
+                        child: const Text('UPDATE'),
+                      ),
                     ),
-                  )),
+                  ),
                   ListTile(
                     title: const Text('Add New Pricing'),
                     trailing: ElevatedButton(
@@ -49,29 +84,38 @@ class SettingsScreen extends ConsumerWidget {
           _buildSection('Computers', [
             computersAsync.when(
               loading: () => const CircularProgressIndicator(),
-              error: (error, stack) => Text('Error: $error'),
+              error: (error, stack) => ErrorView(error: error),
               data: (computers) => Column(
-                children: computers.map((computer) => ListTile(
-                  title: Text(computer.name),
-                  subtitle: Text('Status: ${computer.status}'),
-                  trailing: ElevatedButton(
-                    onPressed: () => _showEditComputerDialog(context, ref, computer),
-                    child: const Text('EDIT'),
-                  ),
-                )).toList(),
+                children: computers
+                    .map(
+                      (computer) => ListTile(
+                        title: Text(computer.name),
+                        subtitle: Text('Status: ${computer.status}'),
+                        trailing: ElevatedButton(
+                          onPressed: () =>
+                              _showEditComputerDialog(context, ref, computer),
+                          child: const Text('EDIT'),
+                        ),
+                      ),
+                    )
+                    .toList(),
               ),
             ),
           ]),
           _buildSection('Cyber Center', [
             cyberCentersAsync.when(
               loading: () => const CircularProgressIndicator(),
-              error: (error, stack) => Text('Error: $error'),
+              error: (error, stack) => ErrorView(error: error),
               data: (cyberCenters) => Column(
                 children: [
-                  ...cyberCenters.map((center) => ListTile(
-                    title: Text(center['name']),
-                    subtitle: Text('Location: ${center['location'] ?? 'N/A'}'),
-                  )),
+                  ...cyberCenters.map(
+                    (center) => ListTile(
+                      title: Text(center['name']),
+                      subtitle: Text(
+                        'Location: ${center['location'] ?? 'N/A'}',
+                      ),
+                    ),
+                  ),
                   ListTile(
                     title: const Text('Add New Cyber Center'),
                     trailing: ElevatedButton(
@@ -83,29 +127,92 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ]),
+          _buildSection('Quick Links', [
+            FutureBuilder<List<ShortcutItem>>(
+              future: _shortcutsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const LinearProgressIndicator();
+                }
+                if (snapshot.hasError) {
+                  return ErrorView(error: snapshot.error!);
+                }
+                final shortcuts = snapshot.data ?? [];
+                return Column(
+                  children: [
+                    ...shortcuts.map(
+                      (shortcut) => ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.grey.shade200,
+                          backgroundImage: shortcut.imageUrl != null &&
+                                  shortcut.imageUrl!.isNotEmpty
+                              ? NetworkImage(shortcut.imageUrl!)
+                              : null,
+                          child: shortcut.imageUrl == null ||
+                                  shortcut.imageUrl!.isEmpty
+                              ? const Icon(Icons.link)
+                              : null,
+                        ),
+                        title: Text(shortcut.name),
+                        subtitle: Text(
+                          '${shortcut.type} • ${shortcut.target} • ${shortcut.price != null && shortcut.price! > 0 ? 'KES ${shortcut.price}' : 'Free'}',
+                        ),
+                        trailing: Wrap(
+                          spacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Switch(
+                              value: shortcut.isActive,
+                              onChanged: (value) async {
+                                try {
+                                  await _api.updateShortcut(
+                                    shortcut.id,
+                                    {
+                                      'isActive': value,
+                                    },
+                                  );
+                                  _refreshShortcuts();
+                                } catch (error) {
+                                  if (context.mounted) {
+                                    ErrorHandler.show(context, error);
+                                  }
+                                }
+                              },
+                            ),
+                            IconButton(
+                              tooltip: 'Edit shortcut',
+                              onPressed: () => _showShortcutDialog(
+                                context,
+                                shortcut: shortcut,
+                              ),
+                              icon: const Icon(Icons.edit),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    ListTile(
+                      title: const Text('Add Quick Link'),
+                      trailing: ElevatedButton(
+                        onPressed: () => _showShortcutDialog(context),
+                        child: const Text('ADD'),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ]),
           _buildSection('Users', [
-            usersAsync.when(
-              loading: () => const CircularProgressIndicator(),
-              error: (error, stack) => Text('Error: $error'),
-              data: (users) => Column(
-                children: [
-                  ...users.map((user) => ListTile(
-                    title: Text(user['email']),
-                    subtitle: Text('Role: ${user['role']} | Balance: KES ${user['balance']}'),
-                    trailing: ElevatedButton(
-                      onPressed: () => _showEditUserDialog(context, ref, user),
-                      child: const Text('EDIT'),
-                    ),
-                  )),
-                  ListTile(
-                    title: const Text('Add New User'),
-                    trailing: ElevatedButton(
-                      onPressed: () => _showAddUserDialog(context, ref),
-                      child: const Text('ADD'),
-                    ),
-                  ),
-                ],
-              ),
+            ListTile(
+              title: const Text('Manage Users'),
+              subtitle: const Text('Create, update, and suspend accounts'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const UsersScreen()));
+              },
             ),
           ]),
           _buildSection('Security', [
@@ -119,6 +226,40 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildAiSettingsSection(BuildContext context) {
+    return _buildSection('AI Settings', [
+      FutureBuilder<String>(
+        future: ConfigService.getAiProvider(),
+        builder: (context, snapshot) {
+          final provider = snapshot.data ?? 'Loading...';
+          return ListTile(
+            title: const Text('AI Provider'),
+            subtitle: Text(provider),
+            trailing: ElevatedButton(
+              onPressed: () => _showEditAiConfigDialog(context),
+              child: const Text('EDIT'),
+            ),
+          );
+        },
+      ),
+    ]);
+  }
+
+  Widget _buildSnmpSettingsSection(BuildContext context) {
+    return _buildSection('SNMP', [
+      ListTile(
+        title: const Text('Manage SNMP Devices'),
+        subtitle: const Text('Configure network printers and counters'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () {
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const SnmpScreen()));
+        },
+      ),
+    ]);
+  }
+
   Widget _buildSection(String title, List<Widget> children) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,10 +268,7 @@ class SettingsScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16.0),
           child: Text(
             title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
         ...children,
@@ -153,7 +291,9 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               TextField(
                 controller: priceController,
-                decoration: const InputDecoration(labelText: 'Price per minute'),
+                decoration: const InputDecoration(
+                  labelText: 'Price per minute',
+                ),
                 keyboardType: TextInputType.number,
               ),
               CheckboxListTile(
@@ -173,7 +313,9 @@ class SettingsScreen extends ConsumerWidget {
                 final price = int.tryParse(priceController.text);
                 if (price != null) {
                   try {
-                    await ref.read(pricingsProvider.notifier).createPricing(price, active);
+                    await ref
+                        .read(pricingsProvider.notifier)
+                        .createPricing(price, active);
                     if (context.mounted) {
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -182,9 +324,7 @@ class SettingsScreen extends ConsumerWidget {
                     }
                   } catch (error) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $error')),
-                      );
+                      ErrorHandler.show(context, error);
                     }
                   }
                 }
@@ -197,8 +337,265 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showUpdatePricingDialog(BuildContext context, WidgetRef ref, Map<String, dynamic> pricing) {
-    final priceController = TextEditingController(text: pricing['pricePerMinute'].toString());
+  void _showShortcutDialog(
+    BuildContext context, {
+    ShortcutItem? shortcut,
+  }) {
+    final nameController = TextEditingController(text: shortcut?.name ?? '');
+    final targetController = TextEditingController(
+      text: shortcut?.target ?? '',
+    );
+    final iconController = TextEditingController(text: shortcut?.icon ?? '');
+    final imageUrlController = TextEditingController(
+      text: shortcut?.imageUrl ?? '',
+    );
+    final priceController = TextEditingController(
+      text: shortcut?.price != null ? '${shortcut?.price}' : '',
+    );
+    String type = shortcut?.type ?? 'URL';
+    bool isActive = shortcut?.isActive ?? true;
+    String? selectedGovServiceId =
+        type == 'GOV_SERVICE' ? shortcut?.target : null;
+    String internalTarget =
+        type == 'INTERNAL'
+            ? (shortcut?.target == 'GOV_SERVICES'
+                ? 'QUICK_LINKS'
+                : (shortcut?.target ?? 'QUICK_LINKS'))
+            : 'QUICK_LINKS';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(shortcut == null ? 'Add Quick Link' : 'Edit Quick Link'),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: type,
+                  decoration: const InputDecoration(labelText: 'Type'),
+                  items: const [
+                    DropdownMenuItem(value: 'URL', child: Text('URL')),
+                    DropdownMenuItem(
+                      value: 'GOV_SERVICE',
+                      child: Text('Government Service'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'AI_SERVICE',
+                      child: Text('AI Service'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'INTERNAL',
+                      child: Text('Internal'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      type = value;
+                      if (type != 'GOV_SERVICE') {
+                        selectedGovServiceId = null;
+                      }
+                      if (type == 'INTERNAL') {
+                        internalTarget = 'QUICK_LINKS';
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 8),
+                if (type == 'GOV_SERVICE')
+                  FutureBuilder<List<dynamic>>(
+                    future: _api.getGovServices(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const LinearProgressIndicator();
+                      }
+                      if (snapshot.hasError) {
+                        return ErrorView(error: snapshot.error!);
+                      }
+                      final services = (snapshot.data ?? [])
+                          .map((e) => GovService.fromJson(e))
+                          .toList();
+                      return DropdownButtonFormField<String>(
+                        value: selectedGovServiceId ??
+                            (services.isNotEmpty ? services.first.id : null),
+                        decoration: const InputDecoration(
+                          labelText: 'Government Service',
+                        ),
+                        items: services
+                            .map(
+                              (s) => DropdownMenuItem(
+                                value: s.id,
+                                child: Text(s.name),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedGovServiceId = value;
+                          });
+                        },
+                      );
+                    },
+                  )
+                else if (type == 'INTERNAL')
+                  DropdownButtonFormField<String>(
+                    value: internalTarget,
+                    decoration: const InputDecoration(labelText: 'Target'),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'QUICK_LINKS',
+                        child: Text('Quick Links'),
+                      ),
+                      DropdownMenuItem(value: 'AI', child: Text('AI')),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => internalTarget = value);
+                    },
+                  )
+                else
+                  TextField(
+                    controller: targetController,
+                    decoration: const InputDecoration(labelText: 'Target'),
+                  ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Price (KES)',
+                    helperText: 'Leave blank for free',
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: imageUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Picture URL (optional)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: iconController,
+                  decoration: const InputDecoration(
+                    labelText: 'Icon (optional)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  title: const Text('Active'),
+                  value: isActive,
+                  onChanged: (value) =>
+                      setState(() => isActive = value ?? true),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = nameController.text.trim();
+                final icon = iconController.text.trim();
+                final imageUrl = imageUrlController.text.trim();
+                final priceText = priceController.text.trim();
+                int? price;
+                if (priceText.isNotEmpty) {
+                  price = int.tryParse(priceText);
+                  if (price == null || price < 0) {
+                    if (context.mounted) {
+                      ErrorHandler.show(
+                        context,
+                        AppError(
+                          type: AppErrorType.validation,
+                          message: 'Price must be a valid number.',
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                }
+                String target;
+                if (type == 'GOV_SERVICE') {
+                  target = selectedGovServiceId ?? '';
+                } else if (type == 'INTERNAL') {
+                  target = internalTarget;
+                } else {
+                  target = targetController.text.trim();
+                }
+
+                if (name.isEmpty || target.isEmpty) {
+                  if (context.mounted) {
+                    ErrorHandler.show(
+                      context,
+                      AppError(
+                        type: AppErrorType.validation,
+                        message: 'Name and target are required.',
+                      ),
+                    );
+                  }
+                  return;
+                }
+
+                try {
+                  if (shortcut == null) {
+                    await _api.createShortcut({
+                      'name': name,
+                      'type': type,
+                      'target': target,
+                      'icon': icon.isEmpty ? null : icon,
+                      'imageUrl': imageUrl.isEmpty ? null : imageUrl,
+                      'price': price,
+                      'isActive': isActive,
+                    });
+                  } else {
+                    await _api.updateShortcut(shortcut.id, {
+                      'name': name,
+                      'type': type,
+                      'target': target,
+                      'icon': icon.isEmpty ? null : icon,
+                      'imageUrl': imageUrl.isEmpty ? null : imageUrl,
+                      'price': priceText.isEmpty ? null : price,
+                      'isActive': isActive,
+                    });
+                  }
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    _refreshShortcuts();
+                  }
+                } catch (error) {
+                  if (context.mounted) {
+                    ErrorHandler.show(context, error);
+                  }
+                }
+              },
+              child: Text(shortcut == null ? 'Add' : 'Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showUpdatePricingDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> pricing,
+  ) {
+    final priceController = TextEditingController(
+      text: pricing['pricePerMinute'].toString(),
+    );
     bool active = pricing['active'];
 
     showDialog(
@@ -211,7 +608,9 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               TextField(
                 controller: priceController,
-                decoration: const InputDecoration(labelText: 'Price per minute'),
+                decoration: const InputDecoration(
+                  labelText: 'Price per minute',
+                ),
                 keyboardType: TextInputType.number,
               ),
               CheckboxListTile(
@@ -231,7 +630,9 @@ class SettingsScreen extends ConsumerWidget {
                 final price = int.tryParse(priceController.text);
                 if (price != null) {
                   try {
-                    await ref.read(pricingsProvider.notifier).updatePricing(pricing['id'], price, active);
+                    await ref
+                        .read(pricingsProvider.notifier)
+                        .updatePricing(pricing['id'], price, active);
                     if (context.mounted) {
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -240,9 +641,7 @@ class SettingsScreen extends ConsumerWidget {
                     }
                   } catch (error) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $error')),
-                      );
+                      ErrorHandler.show(context, error);
                     }
                   }
                 }
@@ -255,7 +654,11 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showEditComputerDialog(BuildContext context, WidgetRef ref, Computer computer) {
+  void _showEditComputerDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Computer computer,
+  ) {
     final nameController = TextEditingController(text: computer.name);
 
     showDialog(
@@ -274,7 +677,9 @@ class SettingsScreen extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               try {
-                await ref.read(apiServiceProvider).updateComputer(computer.id, nameController.text);
+                await ref
+                    .read(apiServiceProvider)
+                    .updateComputer(computer.id, nameController.text);
                 ref.invalidate(computersProvider);
                 if (context.mounted) {
                   Navigator.of(context).pop();
@@ -284,9 +689,7 @@ class SettingsScreen extends ConsumerWidget {
                 }
               } catch (error) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $error')),
-                  );
+                  ErrorHandler.show(context, error);
                 }
               }
             },
@@ -328,11 +731,15 @@ class SettingsScreen extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               try {
-                await ref.read(cyberCentersProvider.notifier).createCyberCenter(
-                  nameController.text,
-                  locationController.text.isEmpty ? null : locationController.text,
-                  organizationId,
-                );
+                await ref
+                    .read(cyberCentersProvider.notifier)
+                    .createCyberCenter(
+                      nameController.text,
+                      locationController.text.isEmpty
+                          ? null
+                          : locationController.text,
+                      organizationId,
+                    );
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -341,9 +748,7 @@ class SettingsScreen extends ConsumerWidget {
                 }
               } catch (error) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $error')),
-                  );
+                  ErrorHandler.show(context, error);
                 }
               }
             },
@@ -355,9 +760,12 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showAddUserDialog(BuildContext context, WidgetRef ref) {
+    final fullNameController = TextEditingController();
     final emailController = TextEditingController();
+    final phoneController = TextEditingController();
     final passwordController = TextEditingController();
-    String role = 'USER';
+    String role = 'STAFF';
+    String status = 'ACTIVE';
 
     showDialog(
       context: context,
@@ -368,8 +776,16 @@ class SettingsScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                controller: fullNameController,
+                decoration: const InputDecoration(labelText: 'Full name'),
+              ),
+              TextField(
                 controller: emailController,
                 decoration: const InputDecoration(labelText: 'Email'),
+              ),
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(labelText: 'Phone'),
               ),
               TextField(
                 controller: passwordController,
@@ -378,9 +794,19 @@ class SettingsScreen extends ConsumerWidget {
               ),
               DropdownButtonFormField<String>(
                 initialValue: role,
-                items: ['ADMIN', 'STAFF', 'USER'].map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                items: ['ADMIN', 'STAFF', 'CUSTOMER', 'STUDENT']
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .toList(),
                 onChanged: (value) => setState(() => role = value!),
                 decoration: const InputDecoration(labelText: 'Role'),
+              ),
+              DropdownButtonFormField<String>(
+                initialValue: status,
+                items: ['ACTIVE', 'SUSPENDED']
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .toList(),
+                onChanged: (value) => setState(() => status = value!),
+                decoration: const InputDecoration(labelText: 'Status'),
               ),
             ],
           ),
@@ -392,23 +818,29 @@ class SettingsScreen extends ConsumerWidget {
             ElevatedButton(
               onPressed: () async {
                 try {
-                  await ref.read(usersProvider.notifier).createUser(
-                    emailController.text,
-                    passwordController.text,
-                    role,
-                    null, // cyberCenterId
-                  );
+                  await ref
+                      .read(usersProvider.notifier)
+                      .createUser(
+                        fullName: fullNameController.text.trim(),
+                        email: emailController.text.trim().isEmpty
+                            ? null
+                            : emailController.text.trim(),
+                        phone: phoneController.text.trim().isEmpty
+                            ? null
+                            : phoneController.text.trim(),
+                        password: passwordController.text.trim(),
+                        role: role,
+                        status: status,
+                      );
                   if (context.mounted) {
                     Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('User added')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text('User added')));
                   }
                 } catch (error) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $error')),
-                    );
+                    ErrorHandler.show(context, error);
                   }
                 }
               },
@@ -420,11 +852,17 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showEditUserDialog(BuildContext context, WidgetRef ref, Map<String, dynamic> user) {
+  void _showEditUserDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> user,
+  ) {
+    final fullNameController = TextEditingController(text: user['fullName']);
     final emailController = TextEditingController(text: user['email']);
+    final phoneController = TextEditingController(text: user['phone']);
     final passwordController = TextEditingController();
     String role = user['role'];
-    final balanceController = TextEditingController(text: user['balance'].toString());
+    String status = user['status'] ?? 'ACTIVE';
 
     showDialog(
       context: context,
@@ -435,24 +873,39 @@ class SettingsScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                controller: fullNameController,
+                decoration: const InputDecoration(labelText: 'Full name'),
+              ),
+              TextField(
                 controller: emailController,
                 decoration: const InputDecoration(labelText: 'Email'),
               ),
               TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(labelText: 'Phone'),
+              ),
+              TextField(
                 controller: passwordController,
-                decoration: const InputDecoration(labelText: 'New Password (leave empty to keep)'),
+                decoration: const InputDecoration(
+                  labelText: 'New Password (leave empty to keep)',
+                ),
                 obscureText: true,
               ),
               DropdownButtonFormField<String>(
                 initialValue: role,
-                items: ['ADMIN', 'STAFF', 'USER'].map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                items: ['ADMIN', 'STAFF', 'CUSTOMER', 'STUDENT']
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .toList(),
                 onChanged: (value) => setState(() => role = value!),
                 decoration: const InputDecoration(labelText: 'Role'),
               ),
-              TextField(
-                controller: balanceController,
-                decoration: const InputDecoration(labelText: 'Balance'),
-                keyboardType: TextInputType.number,
+              DropdownButtonFormField<String>(
+                initialValue: status,
+                items: ['ACTIVE', 'SUSPENDED']
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .toList(),
+                onChanged: (value) => setState(() => status = value!),
+                decoration: const InputDecoration(labelText: 'Status'),
               ),
             ],
           ),
@@ -463,15 +916,26 @@ class SettingsScreen extends ConsumerWidget {
             ),
             ElevatedButton(
               onPressed: () async {
-                final balance = int.tryParse(balanceController.text);
                 try {
-                  await ref.read(usersProvider.notifier).updateUser(
-                    user['id'],
-                    emailController.text,
-                    passwordController.text.isEmpty ? null : passwordController.text,
-                    role,
-                    balance,
-                  );
+                  await ref
+                      .read(usersProvider.notifier)
+                      .updateUser(
+                        id: user['id'],
+                        fullName: fullNameController.text.trim().isEmpty
+                            ? null
+                            : fullNameController.text.trim(),
+                        email: emailController.text.trim().isEmpty
+                            ? null
+                            : emailController.text.trim(),
+                        phone: phoneController.text.trim().isEmpty
+                            ? null
+                            : phoneController.text.trim(),
+                        password: passwordController.text.trim().isEmpty
+                            ? null
+                            : passwordController.text.trim(),
+                        role: role,
+                        status: status,
+                      );
                   if (context.mounted) {
                     Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -480,9 +944,7 @@ class SettingsScreen extends ConsumerWidget {
                   }
                 } catch (error) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $error')),
-                    );
+                    ErrorHandler.show(context, error);
                   }
                 }
               },
@@ -528,7 +990,9 @@ class SettingsScreen extends ConsumerWidget {
               if (context.mounted) {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Password changed (not implemented yet)')),
+                  const SnackBar(
+                    content: Text('Password changed (not implemented yet)'),
+                  ),
                 );
               }
             },
@@ -559,7 +1023,9 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showEditServerUrlDialog(BuildContext context) async {
-    final controller = TextEditingController(text: await ConfigService.getServerUrl());
+    final controller = TextEditingController(
+      text: await ConfigService.getServerUrl(),
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -579,13 +1045,76 @@ class SettingsScreen extends ConsumerWidget {
               if (context.mounted) {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Server URL updated. Restart the app to apply changes.')),
+                  const SnackBar(
+                    content: Text(
+                      'Server URL updated. Restart the app to apply changes.',
+                    ),
+                  ),
                 );
               }
             },
             child: const Text('Save'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditAiConfigDialog(BuildContext context) async {
+    final currentProvider = await ConfigService.getAiProvider();
+    final apiKeyController = TextEditingController(
+      text: await ConfigService.getAiApiKey(),
+    );
+    String selectedProvider = currentProvider;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('AI Configuration'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: selectedProvider,
+                items: const [
+                  DropdownMenuItem(value: 'CHATGPT', child: Text('ChatGPT')),
+                  DropdownMenuItem(value: 'GEMINI', child: Text('Gemini')),
+                  DropdownMenuItem(value: 'GROK', child: Text('Grok')),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => selectedProvider = value);
+                },
+                decoration: const InputDecoration(labelText: 'Provider'),
+              ),
+              TextField(
+                controller: apiKeyController,
+                decoration: const InputDecoration(labelText: 'API Key'),
+                obscureText: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await ConfigService.setAiProvider(selectedProvider);
+                await ConfigService.setAiApiKey(apiKeyController.text.trim());
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('AI settings saved.')),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
       ),
     );
   }

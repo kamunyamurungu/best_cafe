@@ -166,13 +166,189 @@ exports.Prisma.PricingScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.PrintPricingScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  pricePerPage: 'pricePerPage',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PrintJobScalarFieldEnum = {
+  id: 'id',
+  computerId: 'computerId',
+  sessionId: 'sessionId',
+  externalJobId: 'externalJobId',
+  spoolJobId: 'spoolJobId',
+  printerName: 'printerName',
+  pages: 'pages',
+  isColor: 'isColor',
+  paperSize: 'paperSize',
+  cost: 'cost',
+  status: 'status',
+  source: 'source',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PrinterScalarFieldEnum = {
+  id: 'id',
+  computerId: 'computerId',
+  name: 'name',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PrinterDeviceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  host: 'host',
+  community: 'community',
+  scanOid: 'scanOid',
+  copyOid: 'copyOid',
+  enabled: 'enabled',
+  lastScanCount: 'lastScanCount',
+  lastCopyCount: 'lastCopyCount',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ScanCopyMetricScalarFieldEnum = {
+  id: 'id',
+  deviceId: 'deviceId',
+  type: 'type',
+  count: 'count',
+  recordedAt: 'recordedAt'
+};
+
+exports.Prisma.ServiceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  category: 'category',
+  pricingModel: 'pricingModel',
+  unitPrice: 'unitPrice',
+  aiTemplateId: 'aiTemplateId',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.GovServiceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  category: 'category',
+  officialUrl: 'officialUrl',
+  description: 'description',
+  pricingModel: 'pricingModel',
+  unitPrice: 'unitPrice',
+  icon: 'icon',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.GovServiceUsageScalarFieldEnum = {
+  id: 'id',
+  govServiceId: 'govServiceId',
+  staffId: 'staffId',
+  startedAt: 'startedAt',
+  endedAt: 'endedAt',
+  transactionId: 'transactionId'
+};
+
+exports.Prisma.ShortcutScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  type: 'type',
+  target: 'target',
+  icon: 'icon',
+  imageUrl: 'imageUrl',
+  price: 'price',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AiTemplateScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  systemPrompt: 'systemPrompt',
+  userPromptSchema: 'userPromptSchema',
+  outputFormat: 'outputFormat',
+  version: 'version',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AiJobScalarFieldEnum = {
+  id: 'id',
+  serviceId: 'serviceId',
+  templateId: 'templateId',
+  inputData: 'inputData',
+  outputText: 'outputText',
+  outputFilePath: 'outputFilePath',
+  status: 'status',
+  error: 'error',
+  createdById: 'createdById',
+  recordId: 'recordId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.RecordScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  title: 'title',
+  filePath: 'filePath',
+  linkedTransactionId: 'linkedTransactionId',
+  createdById: 'createdById',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.TransactionScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  referenceId: 'referenceId',
+  computerId: 'computerId',
+  sessionId: 'sessionId',
+  printJobId: 'printJobId',
+  customerId: 'customerId',
+  createdById: 'createdById',
+  description: 'description',
+  amount: 'amount',
+  status: 'status',
+  createdAt: 'createdAt',
+  receiptId: 'receiptId'
+};
+
+exports.Prisma.ReceiptScalarFieldEnum = {
+  id: 'id',
+  totalAmount: 'totalAmount',
+  paymentMethod: 'paymentMethod',
+  issuedBy: 'issuedBy',
+  issuedAt: 'issuedAt'
+};
+
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
+  fullName: 'fullName',
   email: 'email',
+  phone: 'phone',
   passwordHash: 'passwordHash',
   role: 'role',
+  status: 'status',
   balance: 'balance',
   cyberCenterId: 'cyberCenterId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.StudentProfileScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  admissionNo: 'admissionNo',
+  balance: 'balance',
+  discountRate: 'discountRate'
+};
+
+exports.Prisma.AuditLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  action: 'action',
+  entity: 'entity',
+  entityId: 'entityId',
   createdAt: 'createdAt'
 };
 
@@ -198,6 +374,10 @@ exports.Prisma.CommandScalarFieldEnum = {
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.NullableJsonNullValueInput = {
@@ -235,10 +415,100 @@ exports.SessionStatus = exports.$Enums.SessionStatus = {
   ENDED: 'ENDED'
 };
 
+exports.PrintPricingType = exports.$Enums.PrintPricingType = {
+  BW: 'BW',
+  COLOR: 'COLOR'
+};
+
+exports.PrintJobStatus = exports.$Enums.PrintJobStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  PRINTED: 'PRINTED',
+  REJECTED: 'REJECTED'
+};
+
+exports.PrintJobSource = exports.$Enums.PrintJobSource = {
+  AGENT: 'AGENT',
+  PRINT_SERVER: 'PRINT_SERVER'
+};
+
+exports.MetricType = exports.$Enums.MetricType = {
+  SCAN: 'SCAN',
+  COPY: 'COPY'
+};
+
+exports.ServiceCategory = exports.$Enums.ServiceCategory = {
+  COMPUTER: 'COMPUTER',
+  PRINT: 'PRINT',
+  SERVICE: 'SERVICE',
+  AI: 'AI'
+};
+
+exports.PricingModel = exports.$Enums.PricingModel = {
+  FLAT: 'FLAT',
+  PER_PAGE: 'PER_PAGE',
+  PER_MINUTE: 'PER_MINUTE'
+};
+
+exports.GovPricingModel = exports.$Enums.GovPricingModel = {
+  FREE: 'FREE',
+  FLAT: 'FLAT',
+  PER_MINUTE: 'PER_MINUTE'
+};
+
+exports.ShortcutType = exports.$Enums.ShortcutType = {
+  URL: 'URL',
+  GOV_SERVICE: 'GOV_SERVICE',
+  AI_SERVICE: 'AI_SERVICE',
+  INTERNAL: 'INTERNAL'
+};
+
+exports.AiOutputFormat = exports.$Enums.AiOutputFormat = {
+  TEXT: 'TEXT',
+  DOCX: 'DOCX',
+  PDF: 'PDF'
+};
+
+exports.AiJobStatus = exports.$Enums.AiJobStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  DONE: 'DONE',
+  FAILED: 'FAILED'
+};
+
+exports.RecordType = exports.$Enums.RecordType = {
+  AI_DOCUMENT: 'AI_DOCUMENT'
+};
+
+exports.TransactionType = exports.$Enums.TransactionType = {
+  TIME: 'TIME',
+  PRINT: 'PRINT',
+  SERVICE: 'SERVICE',
+  AI: 'AI'
+};
+
+exports.TransactionStatus = exports.$Enums.TransactionStatus = {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.PaymentMethod = exports.$Enums.PaymentMethod = {
+  CASH: 'CASH',
+  MPESA: 'MPESA'
+};
+
 exports.UserRole = exports.$Enums.UserRole = {
   ADMIN: 'ADMIN',
   STAFF: 'STAFF',
+  CUSTOMER: 'CUSTOMER',
+  STUDENT: 'STUDENT',
   USER: 'USER'
+};
+
+exports.UserStatus = exports.$Enums.UserStatus = {
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED'
 };
 
 exports.EventType = exports.$Enums.EventType = {
@@ -263,7 +533,23 @@ exports.Prisma.ModelName = {
   Computer: 'Computer',
   Session: 'Session',
   Pricing: 'Pricing',
+  PrintPricing: 'PrintPricing',
+  PrintJob: 'PrintJob',
+  Printer: 'Printer',
+  PrinterDevice: 'PrinterDevice',
+  ScanCopyMetric: 'ScanCopyMetric',
+  Service: 'Service',
+  GovService: 'GovService',
+  GovServiceUsage: 'GovServiceUsage',
+  Shortcut: 'Shortcut',
+  AiTemplate: 'AiTemplate',
+  AiJob: 'AiJob',
+  Record: 'Record',
+  Transaction: 'Transaction',
+  Receipt: 'Receipt',
   User: 'User',
+  StudentProfile: 'StudentProfile',
+  AuditLog: 'AuditLog',
   Event: 'Event',
   Command: 'Command'
 };

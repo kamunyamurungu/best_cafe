@@ -57,6 +57,23 @@ export class SocketsGateway {
       client.data.computerId = computer.id;
 
       client.emit('auth_ok', { computerId: computer.id, deviceToken: computer.deviceToken });
+
+      // If a session is already active, notify the agent immediately
+      try {
+        const activeSession = await this.sessionsService.getActiveSession(computer.id);
+        if (activeSession) {
+          client.emit('session_updated', {
+            sessionId: activeSession.id,
+            computerId: computer.id,
+            status: 'ACTIVE',
+            session: activeSession,
+            startedAt: activeSession.startedAt,
+            pausedMillis: activeSession.pausedMillis,
+          });
+        }
+      } catch (_) {
+        // best-effort
+      }
     } catch (error) {
       client.emit('error', { message: error.message });
     }
@@ -87,7 +104,7 @@ export class SocketsGateway {
       );
 
       client.data.computerId = result.computerId;
-      client.emit('command', { command: result.command });
+      client.emit('command', { command: result.command, session: result.session });
     } catch (error) {
       client.emit('error', { message: error.message });
     }
@@ -140,10 +157,10 @@ export class SocketsGateway {
     this.emitToAdmins('computer_command_sent', { computerId, command, ...data });
   }
 
-  async unlockComputer(computerId: string) {
+  async unlockComputer(computerId: string, data?: any) {
     // Create command record
     const cmd = await this.commandsService.createCommand(computerId, 'UNLOCK');
-    await this.sendCommandToComputer(computerId, 'UNLOCK', { commandId: cmd.id });
+    await this.sendCommandToComputer(computerId, 'UNLOCK', { commandId: cmd.id, ...data });
   }
 
   async lockComputer(computerId: string) {

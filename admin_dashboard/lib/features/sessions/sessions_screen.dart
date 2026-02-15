@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/bloc/sessions_bloc.dart';
+import '../../core/ui/error_view.dart';
 import '../../core/api_service.dart';
 
 class SessionsScreen extends StatelessWidget {
@@ -23,7 +24,7 @@ class SessionsScreen extends StatelessWidget {
           ),
           body: switch (state) {
             SessionsLoading() => const Center(child: CircularProgressIndicator()),
-            SessionsFailure(:final message) => Center(child: Text('Error: $message')),
+            SessionsFailure(:final message) => ErrorView(error: Exception(message)),
             SessionsLoaded(:final items) => ListView.builder(
                 padding: const EdgeInsets.all(16.0),
                 itemCount: items.length,

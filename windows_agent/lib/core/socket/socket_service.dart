@@ -9,14 +9,19 @@ import '../config/config.dart';
 import '../state/agent_state.dart';
 import '../log/logger.dart';
 import '../state/session_summary.dart';
+import '../print/print_spooler_listener.dart';
+import '../errors/app_error.dart';
+import '../errors/error_mapper.dart';
 
 class SocketService {
   late io.Socket socket;
   final AgentStateNotifier stateNotifier;
+  final void Function(Object error)? onError;
   String? computerId;
   Timer? _heartbeatTimer;
+  PrintSpoolerListener? _printListener;
 
-  SocketService(this.stateNotifier);
+  SocketService(this.stateNotifier, {this.onError});
 
   void connect() async {
     final serverUrl = await Config.serverUrl;
@@ -40,6 +45,7 @@ class SocketService {
       }
        Logger.log('Socket disconnected');
       _heartbeatTimer?.cancel();
+      _printListener?.stop();
       stateNotifier.setState(AgentState.disconnected);
     });
 
@@ -58,12 +64,24 @@ class SocketService {
       await Config.setDeviceToken(token);
       await _fetchSession();
       _startHeartbeat();
+      _printListener ??= PrintSpoolerListener(
+        getComputerId: () async => computerId,
+        onError: onError,
+      );
+      _printListener?.start();
+      await _reportPrinters();
     });
 
     socket.on('error', (data) {
       if (kDebugMode) {
         print('Error: ${data['message']}');
       }
+      onError?.call(
+        AppError(
+          type: AppErrorType.network,
+          message: 'Connection error. Please try again.',
+        ),
+      );
       stateNotifier.setState(AgentState.error);
     });
 
@@ -182,6 +200,7 @@ class SocketService {
         }
       } catch (e) {
         if (kDebugMode) print('session_updated handling error: $e');
+        onError?.call(ErrorMapper.fromException(e));
       }
     });
 
@@ -242,6 +261,7 @@ class SocketService {
       } catch (e) {
         if (kDebugMode) print('Error fetching session: $e');
         await Logger.log('Error fetching session: $e');
+        onError?.call(ErrorMapper.fromException(e));
         stateNotifier.setState(AgentState.locked);
       }
     } else {
@@ -264,6 +284,12 @@ class SocketService {
         break;
       case 'UNLOCK':
         _unlockComputer();
+        break;
+      case 'PRINT_RELEASE':
+        _handlePrintRelease(data);
+        break;
+      case 'PRINT_CANCEL':
+        _handlePrintCancel(data);
         break;
       default:
         if (kDebugMode) {
@@ -310,6 +336,24 @@ class SocketService {
     stateNotifier.setState(AgentState.unlocked);
   }
 
+  void _handlePrintRelease(Map<String, dynamic> data) {
+    try {
+      final printerName = data['printerName']?.toString();
+      final jobId = int.tryParse(data['printJobId']?.toString() ?? '');
+      if (printerName == null || jobId == null) return;
+      PrintSpoolerListener.resumeJob(printerName, jobId);
+    } catch (_) {}
+  }
+
+  void _handlePrintCancel(Map<String, dynamic> data) {
+    try {
+      final printerName = data['printerName']?.toString();
+      final jobId = int.tryParse(data['printJobId']?.toString() ?? '');
+      if (printerName == null || jobId == null) return;
+      PrintSpoolerListener.cancelJob(printerName, jobId);
+    } catch (_) {}
+  }
+
   void reconnect() async {
     final token = await Config.deviceToken;
     socket.emit('reconnect', {'deviceToken': token});
@@ -331,6 +375,26 @@ class SocketService {
 
   void disconnect() {
     socket.disconnect();
+  }
+
+  Future<void> _reportPrinters() async {
+    try {
+      final cid = computerId;
+      if (cid == null) return;
+      final printers = PrintSpoolerListener.listPrintersStatic();
+      if (printers.isEmpty) return;
+      final url = '${await Config.serverUrl}/printers/report';
+      await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'computerId': cid,
+          'printers': printers.map((p) => {'name': p}).toList(),
+        }),
+      );
+    } catch (e) {
+      onError?.call(ErrorMapper.fromException(e));
+    }
   }
 
   Future<bool> applyServerUrl(String url) async {
