@@ -25,17 +25,34 @@ class _LockScreenState extends State<LockScreen> with WindowListener {
   late SocketService _socketService;
   SessionSummary? _lastSummary;
   bool _summaryPopupShown = false;
+  bool _serverConfigPromptShown = false;
+  late VoidCallback _serverConfigListener;
   @override
   void initState() {
     super.initState();
     windowManager.addListener(this);
     _socketService = Provider.of<SocketService>(context, listen: false);
+    _serverConfigListener = () {
+      final needsConfig = _socketService.serverConfigRequired.value;
+      if (!needsConfig) {
+        _serverConfigPromptShown = false;
+        return;
+      }
+      if (_serverConfigPromptShown || !mounted) return;
+      _serverConfigPromptShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _configureServerImproved();
+      });
+    };
+    _socketService.serverConfigRequired.addListener(_serverConfigListener);
     _makeFullscreen();
     _loadSummary();
   }
 
   @override
   void dispose() {
+    _socketService.serverConfigRequired.removeListener(_serverConfigListener);
     windowManager.removeListener(this);
     super.dispose();
   }

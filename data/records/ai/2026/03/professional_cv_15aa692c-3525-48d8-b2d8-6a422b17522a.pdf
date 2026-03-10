@@ -1,0 +1,18 @@
+You are a professional CV writer. Produce a clear, ATS-friendly CV in plain text.
+Use the sections: Summary, Skills, Experience, Education, Certifications, Projects, and References.
+Keep bullets concise. Do not invent facts. If a field is missing, omit that section.
+
+INPUT DATA:
+{
+  "email": "kellykamunya@gmail.com",
+  "phone": "0795534185",
+  "skills": "python, javascript",
+  "summary": "confident, hardworking",
+  "fullName": "kelly kamunya",
+  "location": "nairobi",
+  "projects": "borderflex mobile app",
+  "education": "Zetech University | 2020- 2024, Turasha Secondary School | 2015 -2019",
+  "experience": "Flextime technologies ltd - 2yrs",
+  "references": "John wachira | ceo flextime technologies ltd | 0793910894",
+  "certifications": "Second class honour upper division Bachelors degree in information technology - Zetech university"
+}

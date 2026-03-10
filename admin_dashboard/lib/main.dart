@@ -215,6 +215,30 @@ class _AdminHomeState extends State<AdminHome> {
     });
   }
 
+  Future<void> _confirmLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign out'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Log out'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true) {
+      widget.onLogout();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -224,6 +248,16 @@ class _AdminHomeState extends State<AdminHome> {
             selectedIndex: _selectedIndex,
             onDestinationSelected: _onItemTapped,
             labelType: NavigationRailLabelType.all,
+            trailing: Column(
+              children: [
+                const SizedBox(height: 12),
+                IconButton(
+                  tooltip: 'Logout',
+                  onPressed: _confirmLogout,
+                  icon: const Icon(Icons.logout),
+                ),
+              ],
+            ),
             destinations: const [
               NavigationRailDestination(
                 icon: Icon(Icons.dashboard),
@@ -247,7 +281,7 @@ class _AdminHomeState extends State<AdminHome> {
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.public),
-                label: Text('Quick Links'),
+                label: Text('Quick Access'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.people),
@@ -272,15 +306,6 @@ class _AdminHomeState extends State<AdminHome> {
             child: Stack(
               children: [
                 _screens[_selectedIndex],
-                Positioned(
-                  right: 16,
-                  top: 16,
-                  child: IconButton(
-                    tooltip: 'Logout',
-                    onPressed: widget.onLogout,
-                    icon: const Icon(Icons.logout),
-                  ),
-                ),
               ],
             ),
           ),

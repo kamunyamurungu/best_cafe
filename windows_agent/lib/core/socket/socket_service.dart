@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'dart:ui';
+import 'dart:io';
 import '../config/config.dart';
 import '../state/agent_state.dart';
 import '../log/logger.dart';
@@ -17,9 +18,13 @@ class SocketService {
   late io.Socket socket;
   final AgentStateNotifier stateNotifier;
   final void Function(Object error)? onError;
+  final ValueNotifier<bool> serverConfigRequired = ValueNotifier(false);
   String? computerId;
   Timer? _heartbeatTimer;
   PrintSpoolerListener? _printListener;
+  int _connectFailures = 0;
+  bool _promptedServerConfig = false;
+  static const int _maxReconnectAttempts = 8;
 
   SocketService(this.stateNotifier, {this.onError});
 
@@ -28,6 +33,11 @@ class SocketService {
     socket = io.io(serverUrl, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
+      'reconnection': true,
+      'reconnectionAttempts': _maxReconnectAttempts,
+      'reconnectionDelay': 1000,
+      'reconnectionDelayMax': 5000,
+      'timeout': 5000,
     });
 
     socket.onConnect((_) async {
@@ -35,6 +45,9 @@ class SocketService {
         print('Connected to server');
       }
       await Logger.log('Socket connected');
+      _connectFailures = 0;
+      _promptedServerConfig = false;
+      serverConfigRequired.value = false;
       stateNotifier.setState(AgentState.connected);
       await _authenticate();
     });
@@ -47,6 +60,21 @@ class SocketService {
       _heartbeatTimer?.cancel();
       _printListener?.stop();
       stateNotifier.setState(AgentState.disconnected);
+    });
+
+    socket.on('connect_error', (_) {
+      _connectFailures += 1;
+      _handleReconnectFailure();
+    });
+
+    socket.on('reconnect_attempt', (_) {
+      _connectFailures += 1;
+      _handleReconnectFailure();
+    });
+
+    socket.on('reconnect_failed', (_) {
+      _connectFailures = _maxReconnectAttempts;
+      _handleReconnectFailure();
     });
 
     socket.on('command', (data) {
@@ -285,6 +313,9 @@ class SocketService {
       case 'UNLOCK':
         _unlockComputer();
         break;
+      case 'POWER_OFF':
+        _powerOffComputer();
+        break;
       case 'PRINT_RELEASE':
         _handlePrintRelease(data);
         break;
@@ -336,6 +367,15 @@ class SocketService {
     stateNotifier.setState(AgentState.unlocked);
   }
 
+  void _powerOffComputer() async {
+    await Logger.log('Power off command received');
+    try {
+      await Process.start('shutdown', ['/s', '/t', '0'], runInShell: true);
+    } catch (e) {
+      await Logger.log('Power off failed: $e');
+    }
+  }
+
   void _handlePrintRelease(Map<String, dynamic> data) {
     try {
       final printerName = data['printerName']?.toString();
@@ -357,6 +397,20 @@ class SocketService {
   void reconnect() async {
     final token = await Config.deviceToken;
     socket.emit('reconnect', {'deviceToken': token});
+  }
+
+  void _handleReconnectFailure() {
+    if (_promptedServerConfig) return;
+    if (_connectFailures < _maxReconnectAttempts) return;
+    _promptedServerConfig = true;
+    stateNotifier.setState(AgentState.error);
+    serverConfigRequired.value = true;
+    onError?.call(
+      AppError(
+        type: AppErrorType.network,
+        message: 'Unable to connect. Please configure the server URL.',
+      ),
+    );
   }
 
   void _startHeartbeat() async {
@@ -408,6 +462,9 @@ class SocketService {
     } catch (_) {}
 
     await Config.setServerUrl(url);
+  _connectFailures = 0;
+  _promptedServerConfig = false;
+  serverConfigRequired.value = false;
     stateNotifier.setState(AgentState.disconnected);
 
     // Start a fresh connection

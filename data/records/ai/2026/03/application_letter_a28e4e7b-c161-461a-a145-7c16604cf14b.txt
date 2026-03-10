@@ -1,0 +1,23 @@
+You are a professional HR writer. Write a one-page application letter in a formal, clear tone.
+Address it to the hiring manager and tailor it to the role. Use 3 short paragraphs.
+Do not invent facts. If a field is missing, omit that detail.
+End with a polite closing and the applicant's name.
+
+INPUT DATA:
+{
+  "date": "03/03/2026",
+  "email": "kellykamunya@gmail.com",
+  "phone": "0795534185",
+  "skills": "Software Development, Video Editing, Graphics Design",
+  "summary": "a confident and skilled young professional which is self driven and highly motivated",
+  "fullName": "Kelly kamunya",
+  "jobTitle": "Software Developer",
+  "location": "Nairobi",
+  "education": "Graduated with a second class honours upper division from zetech university",
+  "jobSource": "Kenya",
+  "experience": "2 years",
+  "companyName": "Flextime technologies ltd",
+  "availability": "full time",
+  "recipientName": "Paul Mwangi",
+  "recipientTitle": "Hr"
+}

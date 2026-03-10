@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -167,6 +167,54 @@ export class UsersService {
     await this.auditService.logAction(actorId, 'USER_DELETED', 'User', id);
 
     return { id };
+  }
+
+  async addBalance(id: string, amount: number, actorId: string) {
+    if (!amount || amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: { studentProfile: true },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    let updated;
+    if (user.role === UserRole.STUDENT) {
+      updated = await this.prisma.user.update({
+        where: { id },
+        data: {
+          studentProfile: {
+            upsert: {
+              create: {
+                admissionNo: user.studentProfile?.admissionNo ?? undefined,
+                discountRate: user.studentProfile?.discountRate ?? null,
+                balance: amount,
+              },
+              update: {
+                balance: { increment: amount },
+              },
+            },
+          },
+        },
+        include: { studentProfile: true },
+      });
+    } else {
+      updated = await this.prisma.user.update({
+        where: { id },
+        data: {
+          balance: { increment: amount },
+        },
+        include: { studentProfile: true },
+      });
+    }
+
+    await this.auditService.logAction(actorId, 'USER_BALANCE_ADDED', 'User', id);
+
+    return this.sanitizeUser(updated);
   }
 
   async getMe(userId: string) {

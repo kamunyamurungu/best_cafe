@@ -16,6 +16,9 @@ export class SocketsGateway {
   @WebSocketServer()
   server: Server;
 
+  private readonly disconnectGraceMs = 120000;
+  private readonly disconnectTimers = new Map<string, NodeJS.Timeout>();
+
   constructor(
     private computersService: ComputersService,
     @Inject(forwardRef(() => SessionsService))
@@ -23,22 +26,42 @@ export class SocketsGateway {
     private commandsService: CommandsService,
   ) {}
 
+  private clearDisconnectTimer(computerId: string) {
+    const existing = this.disconnectTimers.get(computerId);
+    if (existing) {
+      clearTimeout(existing);
+      this.disconnectTimers.delete(computerId);
+    }
+  }
+
   // Handle socket disconnects (computers)
   async handleDisconnect(client: Socket) {
     const computerId = client.data.computerId as string | undefined;
     if (!computerId) return;
-    try {
-      // Pause any active session and lock immediately
-      await this.sessionsService.pauseActiveSessionForComputer(computerId);
-      await this.computersService.updateStatus(computerId, 'OFFLINE' as any);
-      // Notify admin dashboards only
-      await this.emitToAdmins('computer_status_changed', {
-        computerId,
-        status: 'OFFLINE',
-      });
-    } catch (e) {
-      // Swallow errors to avoid crashing on disconnect
-    }
+    this.clearDisconnectTimer(computerId);
+    const timer = setTimeout(async () => {
+      try {
+        const sockets = await this.server.fetchSockets();
+        const stillConnected = sockets.some(
+          (socket) => socket.data?.computerId === computerId,
+        );
+        if (stillConnected) return;
+
+        // Pause any active session and lock after grace period
+        await this.sessionsService.pauseActiveSessionForComputer(computerId);
+        await this.computersService.updateStatus(computerId, 'OFFLINE' as any);
+        // Notify admin dashboards only
+        await this.emitToAdmins('computer_status_changed', {
+          computerId,
+          status: 'OFFLINE',
+        });
+      } catch (e) {
+        // Swallow errors to avoid crashing on disconnect
+      } finally {
+        this.clearDisconnectTimer(computerId);
+      }
+    }, this.disconnectGraceMs);
+    this.disconnectTimers.set(computerId, timer);
   }
 
   @SubscribeMessage('hello')
@@ -55,6 +78,8 @@ export class SocketsGateway {
 
       // Store computer ID in socket for later use
       client.data.computerId = computer.id;
+
+      this.clearDisconnectTimer(computer.id);
 
       client.emit('auth_ok', { computerId: computer.id, deviceToken: computer.deviceToken });
 
@@ -167,6 +192,21 @@ export class SocketsGateway {
     // Create command record
     const cmd = await this.commandsService.createCommand(computerId, 'LOCK');
     await this.sendCommandToComputer(computerId, 'LOCK', { commandId: cmd.id });
+  }
+
+  async powerOffComputer(computerId: string) {
+    const cmd = await this.commandsService.createCommand(computerId, 'POWER_OFF');
+    await this.sendCommandToComputer(computerId, 'POWER_OFF', { commandId: cmd.id });
+  }
+
+  async powerOffAllComputers() {
+    const commands = await this.commandsService.createCommandsForAll('POWER_OFF');
+    await Promise.all(
+      commands.map((cmd) =>
+        this.sendCommandToComputer(cmd.computerId, 'POWER_OFF', { commandId: cmd.id }),
+      ),
+    );
+    return commands;
   }
 
   // Helper: emit events to admin dashboard sockets only

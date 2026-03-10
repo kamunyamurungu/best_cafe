@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../logger/app_logger.dart';
@@ -8,46 +9,59 @@ class ErrorMapper {
   static AppError fromResponse(http.Response response) {
     final status = response.statusCode;
     AppLogger.log('HTTP error $status', response.body);
+    String? apiMessage;
+
+    try {
+      final data = json.decode(response.body);
+      if (data is Map) {
+        final message = data['message'];
+        if (message is List) {
+          apiMessage = message.join(' ');
+        } else if (message != null) {
+          apiMessage = message.toString();
+        }
+      }
+    } catch (_) {}
 
     if (status == 400 || status == 422) {
       return AppError(
         type: AppErrorType.validation,
-        message: 'Invalid input. Please check and try again.',
+        message: apiMessage ?? 'Invalid input. Please check and try again.',
         statusCode: status,
       );
     }
     if (status == 401) {
       return AppError(
         type: AppErrorType.unauthorized,
-        message: 'Session expired. Please login again.',
+        message: apiMessage ?? 'Session expired. Please login again.',
         statusCode: status,
       );
     }
     if (status == 403) {
       return AppError(
         type: AppErrorType.forbidden,
-        message: "You don’t have permission to perform this action.",
+        message: apiMessage ?? "You don’t have permission to perform this action.",
         statusCode: status,
       );
     }
     if (status == 404) {
       return AppError(
         type: AppErrorType.notFound,
-        message: 'Requested resource was not found.',
+        message: apiMessage ?? 'Requested resource was not found.',
         statusCode: status,
       );
     }
     if (status >= 500) {
       return AppError(
         type: AppErrorType.server,
-        message: 'Server error. Please try again later.',
+        message: apiMessage ?? 'Server error. Please try again later.',
         statusCode: status,
       );
     }
 
     return AppError(
       type: AppErrorType.unknown,
-      message: 'Something went wrong. Please try again.',
+      message: apiMessage ?? 'Something went wrong. Please try again.',
       statusCode: status,
     );
   }

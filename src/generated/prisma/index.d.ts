@@ -84,6 +84,11 @@ export type GovServiceUsage = $Result.DefaultSelection<Prisma.$GovServiceUsagePa
  */
 export type Shortcut = $Result.DefaultSelection<Prisma.$ShortcutPayload>
 /**
+ * Model AppSetting
+ * 
+ */
+export type AppSetting = $Result.DefaultSelection<Prisma.$AppSettingPayload>
+/**
  * Model AiTemplate
  * 
  */
@@ -657,6 +662,16 @@ export class PrismaClient<
   get shortcut(): Prisma.ShortcutDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.appSetting`: Exposes CRUD operations for the **AppSetting** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AppSettings
+    * const appSettings = await prisma.appSetting.findMany()
+    * ```
+    */
+  get appSetting(): Prisma.AppSettingDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.aiTemplate`: Exposes CRUD operations for the **AiTemplate** model.
     * Example usage:
     * ```ts
@@ -1203,6 +1218,7 @@ export namespace Prisma {
     GovService: 'GovService',
     GovServiceUsage: 'GovServiceUsage',
     Shortcut: 'Shortcut',
+    AppSetting: 'AppSetting',
     AiTemplate: 'AiTemplate',
     AiJob: 'AiJob',
     Record: 'Record',
@@ -1228,7 +1244,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "organization" | "cyberCenter" | "computer" | "session" | "pricing" | "printPricing" | "printJob" | "printer" | "printerDevice" | "scanCopyMetric" | "service" | "govService" | "govServiceUsage" | "shortcut" | "aiTemplate" | "aiJob" | "record" | "transaction" | "receipt" | "user" | "studentProfile" | "auditLog" | "event" | "command"
+      modelProps: "organization" | "cyberCenter" | "computer" | "session" | "pricing" | "printPricing" | "printJob" | "printer" | "printerDevice" | "scanCopyMetric" | "service" | "govService" | "govServiceUsage" | "shortcut" | "appSetting" | "aiTemplate" | "aiJob" | "record" | "transaction" | "receipt" | "user" | "studentProfile" | "auditLog" | "event" | "command"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2268,6 +2284,80 @@ export namespace Prisma {
           }
         }
       }
+      AppSetting: {
+        payload: Prisma.$AppSettingPayload<ExtArgs>
+        fields: Prisma.AppSettingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AppSettingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AppSettingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload>
+          }
+          findFirst: {
+            args: Prisma.AppSettingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AppSettingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload>
+          }
+          findMany: {
+            args: Prisma.AppSettingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload>[]
+          }
+          create: {
+            args: Prisma.AppSettingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload>
+          }
+          createMany: {
+            args: Prisma.AppSettingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AppSettingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload>[]
+          }
+          delete: {
+            args: Prisma.AppSettingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload>
+          }
+          update: {
+            args: Prisma.AppSettingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload>
+          }
+          deleteMany: {
+            args: Prisma.AppSettingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AppSettingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AppSettingUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload>[]
+          }
+          upsert: {
+            args: Prisma.AppSettingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppSettingPayload>
+          }
+          aggregate: {
+            args: Prisma.AppSettingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAppSetting>
+          }
+          groupBy: {
+            args: Prisma.AppSettingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AppSettingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AppSettingCountArgs<ExtArgs>
+            result: $Utils.Optional<AppSettingCountAggregateOutputType> | number
+          }
+        }
+      }
       AiTemplate: {
         payload: Prisma.$AiTemplatePayload<ExtArgs>
         fields: Prisma.AiTemplateFieldRefs
@@ -3130,6 +3220,7 @@ export namespace Prisma {
     govService?: GovServiceOmit
     govServiceUsage?: GovServiceUsageOmit
     shortcut?: ShortcutOmit
+    appSetting?: AppSettingOmit
     aiTemplate?: AiTemplateOmit
     aiJob?: AiJobOmit
     record?: RecordOmit
@@ -7181,12 +7272,16 @@ export namespace Prisma {
     pausedMillis: number | null
     pricePerMinute: number | null
     totalCost: number | null
+    prepaidAmount: number | null
+    prepaidMinutes: number | null
   }
 
   export type SessionSumAggregateOutputType = {
     pausedMillis: number | null
     pricePerMinute: number | null
     totalCost: number | null
+    prepaidAmount: number | null
+    prepaidMinutes: number | null
   }
 
   export type SessionMinAggregateOutputType = {
@@ -7201,6 +7296,8 @@ export namespace Prisma {
     pausedMillis: number | null
     pricePerMinute: number | null
     totalCost: number | null
+    prepaidAmount: number | null
+    prepaidMinutes: number | null
     createdAt: Date | null
   }
 
@@ -7216,6 +7313,8 @@ export namespace Prisma {
     pausedMillis: number | null
     pricePerMinute: number | null
     totalCost: number | null
+    prepaidAmount: number | null
+    prepaidMinutes: number | null
     createdAt: Date | null
   }
 
@@ -7231,6 +7330,8 @@ export namespace Prisma {
     pausedMillis: number
     pricePerMinute: number
     totalCost: number
+    prepaidAmount: number
+    prepaidMinutes: number
     createdAt: number
     _all: number
   }
@@ -7240,12 +7341,16 @@ export namespace Prisma {
     pausedMillis?: true
     pricePerMinute?: true
     totalCost?: true
+    prepaidAmount?: true
+    prepaidMinutes?: true
   }
 
   export type SessionSumAggregateInputType = {
     pausedMillis?: true
     pricePerMinute?: true
     totalCost?: true
+    prepaidAmount?: true
+    prepaidMinutes?: true
   }
 
   export type SessionMinAggregateInputType = {
@@ -7260,6 +7365,8 @@ export namespace Prisma {
     pausedMillis?: true
     pricePerMinute?: true
     totalCost?: true
+    prepaidAmount?: true
+    prepaidMinutes?: true
     createdAt?: true
   }
 
@@ -7275,6 +7382,8 @@ export namespace Prisma {
     pausedMillis?: true
     pricePerMinute?: true
     totalCost?: true
+    prepaidAmount?: true
+    prepaidMinutes?: true
     createdAt?: true
   }
 
@@ -7290,6 +7399,8 @@ export namespace Prisma {
     pausedMillis?: true
     pricePerMinute?: true
     totalCost?: true
+    prepaidAmount?: true
+    prepaidMinutes?: true
     createdAt?: true
     _all?: true
   }
@@ -7392,6 +7503,8 @@ export namespace Prisma {
     pausedMillis: number
     pricePerMinute: number
     totalCost: number | null
+    prepaidAmount: number | null
+    prepaidMinutes: number | null
     createdAt: Date
     _count: SessionCountAggregateOutputType | null
     _avg: SessionAvgAggregateOutputType | null
@@ -7426,6 +7539,8 @@ export namespace Prisma {
     pausedMillis?: boolean
     pricePerMinute?: boolean
     totalCost?: boolean
+    prepaidAmount?: boolean
+    prepaidMinutes?: boolean
     createdAt?: boolean
     computer?: boolean | ComputerDefaultArgs<ExtArgs>
     cyberCenter?: boolean | Session$cyberCenterArgs<ExtArgs>
@@ -7447,6 +7562,8 @@ export namespace Prisma {
     pausedMillis?: boolean
     pricePerMinute?: boolean
     totalCost?: boolean
+    prepaidAmount?: boolean
+    prepaidMinutes?: boolean
     createdAt?: boolean
     computer?: boolean | ComputerDefaultArgs<ExtArgs>
     cyberCenter?: boolean | Session$cyberCenterArgs<ExtArgs>
@@ -7465,6 +7582,8 @@ export namespace Prisma {
     pausedMillis?: boolean
     pricePerMinute?: boolean
     totalCost?: boolean
+    prepaidAmount?: boolean
+    prepaidMinutes?: boolean
     createdAt?: boolean
     computer?: boolean | ComputerDefaultArgs<ExtArgs>
     cyberCenter?: boolean | Session$cyberCenterArgs<ExtArgs>
@@ -7483,10 +7602,12 @@ export namespace Prisma {
     pausedMillis?: boolean
     pricePerMinute?: boolean
     totalCost?: boolean
+    prepaidAmount?: boolean
+    prepaidMinutes?: boolean
     createdAt?: boolean
   }
 
-  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "computerId" | "cyberCenterId" | "userId" | "startedAt" | "endedAt" | "status" | "pausedAt" | "pausedMillis" | "pricePerMinute" | "totalCost" | "createdAt", ExtArgs["result"]["session"]>
+  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "computerId" | "cyberCenterId" | "userId" | "startedAt" | "endedAt" | "status" | "pausedAt" | "pausedMillis" | "pricePerMinute" | "totalCost" | "prepaidAmount" | "prepaidMinutes" | "createdAt", ExtArgs["result"]["session"]>
   export type SessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     computer?: boolean | ComputerDefaultArgs<ExtArgs>
     cyberCenter?: boolean | Session$cyberCenterArgs<ExtArgs>
@@ -7527,6 +7648,8 @@ export namespace Prisma {
       pausedMillis: number
       pricePerMinute: number
       totalCost: number | null
+      prepaidAmount: number | null
+      prepaidMinutes: number | null
       createdAt: Date
     }, ExtArgs["result"]["session"]>
     composites: {}
@@ -7967,6 +8090,8 @@ export namespace Prisma {
     readonly pausedMillis: FieldRef<"Session", 'Int'>
     readonly pricePerMinute: FieldRef<"Session", 'Int'>
     readonly totalCost: FieldRef<"Session", 'Int'>
+    readonly prepaidAmount: FieldRef<"Session", 'Int'>
+    readonly prepaidMinutes: FieldRef<"Session", 'Int'>
     readonly createdAt: FieldRef<"Session", 'DateTime'>
   }
     
@@ -19610,6 +19735,975 @@ export namespace Prisma {
      * Omit specific fields from the Shortcut
      */
     omit?: ShortcutOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AppSetting
+   */
+
+  export type AggregateAppSetting = {
+    _count: AppSettingCountAggregateOutputType | null
+    _min: AppSettingMinAggregateOutputType | null
+    _max: AppSettingMaxAggregateOutputType | null
+  }
+
+  export type AppSettingMinAggregateOutputType = {
+    key: string | null
+    value: string | null
+    updatedAt: Date | null
+  }
+
+  export type AppSettingMaxAggregateOutputType = {
+    key: string | null
+    value: string | null
+    updatedAt: Date | null
+  }
+
+  export type AppSettingCountAggregateOutputType = {
+    key: number
+    value: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AppSettingMinAggregateInputType = {
+    key?: true
+    value?: true
+    updatedAt?: true
+  }
+
+  export type AppSettingMaxAggregateInputType = {
+    key?: true
+    value?: true
+    updatedAt?: true
+  }
+
+  export type AppSettingCountAggregateInputType = {
+    key?: true
+    value?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AppSettingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AppSetting to aggregate.
+     */
+    where?: AppSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AppSettings to fetch.
+     */
+    orderBy?: AppSettingOrderByWithRelationInput | AppSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AppSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AppSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AppSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AppSettings
+    **/
+    _count?: true | AppSettingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AppSettingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AppSettingMaxAggregateInputType
+  }
+
+  export type GetAppSettingAggregateType<T extends AppSettingAggregateArgs> = {
+        [P in keyof T & keyof AggregateAppSetting]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAppSetting[P]>
+      : GetScalarType<T[P], AggregateAppSetting[P]>
+  }
+
+
+
+
+  export type AppSettingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AppSettingWhereInput
+    orderBy?: AppSettingOrderByWithAggregationInput | AppSettingOrderByWithAggregationInput[]
+    by: AppSettingScalarFieldEnum[] | AppSettingScalarFieldEnum
+    having?: AppSettingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AppSettingCountAggregateInputType | true
+    _min?: AppSettingMinAggregateInputType
+    _max?: AppSettingMaxAggregateInputType
+  }
+
+  export type AppSettingGroupByOutputType = {
+    key: string
+    value: string
+    updatedAt: Date
+    _count: AppSettingCountAggregateOutputType | null
+    _min: AppSettingMinAggregateOutputType | null
+    _max: AppSettingMaxAggregateOutputType | null
+  }
+
+  type GetAppSettingGroupByPayload<T extends AppSettingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AppSettingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AppSettingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AppSettingGroupByOutputType[P]>
+            : GetScalarType<T[P], AppSettingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AppSettingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["appSetting"]>
+
+  export type AppSettingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["appSetting"]>
+
+  export type AppSettingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["appSetting"]>
+
+  export type AppSettingSelectScalar = {
+    key?: boolean
+    value?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AppSettingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"key" | "value" | "updatedAt", ExtArgs["result"]["appSetting"]>
+
+  export type $AppSettingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AppSetting"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      key: string
+      value: string
+      updatedAt: Date
+    }, ExtArgs["result"]["appSetting"]>
+    composites: {}
+  }
+
+  type AppSettingGetPayload<S extends boolean | null | undefined | AppSettingDefaultArgs> = $Result.GetResult<Prisma.$AppSettingPayload, S>
+
+  type AppSettingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AppSettingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AppSettingCountAggregateInputType | true
+    }
+
+  export interface AppSettingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AppSetting'], meta: { name: 'AppSetting' } }
+    /**
+     * Find zero or one AppSetting that matches the filter.
+     * @param {AppSettingFindUniqueArgs} args - Arguments to find a AppSetting
+     * @example
+     * // Get one AppSetting
+     * const appSetting = await prisma.appSetting.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AppSettingFindUniqueArgs>(args: SelectSubset<T, AppSettingFindUniqueArgs<ExtArgs>>): Prisma__AppSettingClient<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AppSetting that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AppSettingFindUniqueOrThrowArgs} args - Arguments to find a AppSetting
+     * @example
+     * // Get one AppSetting
+     * const appSetting = await prisma.appSetting.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AppSettingFindUniqueOrThrowArgs>(args: SelectSubset<T, AppSettingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AppSettingClient<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AppSetting that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppSettingFindFirstArgs} args - Arguments to find a AppSetting
+     * @example
+     * // Get one AppSetting
+     * const appSetting = await prisma.appSetting.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AppSettingFindFirstArgs>(args?: SelectSubset<T, AppSettingFindFirstArgs<ExtArgs>>): Prisma__AppSettingClient<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AppSetting that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppSettingFindFirstOrThrowArgs} args - Arguments to find a AppSetting
+     * @example
+     * // Get one AppSetting
+     * const appSetting = await prisma.appSetting.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AppSettingFindFirstOrThrowArgs>(args?: SelectSubset<T, AppSettingFindFirstOrThrowArgs<ExtArgs>>): Prisma__AppSettingClient<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AppSettings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppSettingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AppSettings
+     * const appSettings = await prisma.appSetting.findMany()
+     * 
+     * // Get first 10 AppSettings
+     * const appSettings = await prisma.appSetting.findMany({ take: 10 })
+     * 
+     * // Only select the `key`
+     * const appSettingWithKeyOnly = await prisma.appSetting.findMany({ select: { key: true } })
+     * 
+     */
+    findMany<T extends AppSettingFindManyArgs>(args?: SelectSubset<T, AppSettingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AppSetting.
+     * @param {AppSettingCreateArgs} args - Arguments to create a AppSetting.
+     * @example
+     * // Create one AppSetting
+     * const AppSetting = await prisma.appSetting.create({
+     *   data: {
+     *     // ... data to create a AppSetting
+     *   }
+     * })
+     * 
+     */
+    create<T extends AppSettingCreateArgs>(args: SelectSubset<T, AppSettingCreateArgs<ExtArgs>>): Prisma__AppSettingClient<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AppSettings.
+     * @param {AppSettingCreateManyArgs} args - Arguments to create many AppSettings.
+     * @example
+     * // Create many AppSettings
+     * const appSetting = await prisma.appSetting.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AppSettingCreateManyArgs>(args?: SelectSubset<T, AppSettingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AppSettings and returns the data saved in the database.
+     * @param {AppSettingCreateManyAndReturnArgs} args - Arguments to create many AppSettings.
+     * @example
+     * // Create many AppSettings
+     * const appSetting = await prisma.appSetting.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AppSettings and only return the `key`
+     * const appSettingWithKeyOnly = await prisma.appSetting.createManyAndReturn({
+     *   select: { key: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AppSettingCreateManyAndReturnArgs>(args?: SelectSubset<T, AppSettingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AppSetting.
+     * @param {AppSettingDeleteArgs} args - Arguments to delete one AppSetting.
+     * @example
+     * // Delete one AppSetting
+     * const AppSetting = await prisma.appSetting.delete({
+     *   where: {
+     *     // ... filter to delete one AppSetting
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AppSettingDeleteArgs>(args: SelectSubset<T, AppSettingDeleteArgs<ExtArgs>>): Prisma__AppSettingClient<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AppSetting.
+     * @param {AppSettingUpdateArgs} args - Arguments to update one AppSetting.
+     * @example
+     * // Update one AppSetting
+     * const appSetting = await prisma.appSetting.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AppSettingUpdateArgs>(args: SelectSubset<T, AppSettingUpdateArgs<ExtArgs>>): Prisma__AppSettingClient<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AppSettings.
+     * @param {AppSettingDeleteManyArgs} args - Arguments to filter AppSettings to delete.
+     * @example
+     * // Delete a few AppSettings
+     * const { count } = await prisma.appSetting.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AppSettingDeleteManyArgs>(args?: SelectSubset<T, AppSettingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AppSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppSettingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AppSettings
+     * const appSetting = await prisma.appSetting.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AppSettingUpdateManyArgs>(args: SelectSubset<T, AppSettingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AppSettings and returns the data updated in the database.
+     * @param {AppSettingUpdateManyAndReturnArgs} args - Arguments to update many AppSettings.
+     * @example
+     * // Update many AppSettings
+     * const appSetting = await prisma.appSetting.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AppSettings and only return the `key`
+     * const appSettingWithKeyOnly = await prisma.appSetting.updateManyAndReturn({
+     *   select: { key: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AppSettingUpdateManyAndReturnArgs>(args: SelectSubset<T, AppSettingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AppSetting.
+     * @param {AppSettingUpsertArgs} args - Arguments to update or create a AppSetting.
+     * @example
+     * // Update or create a AppSetting
+     * const appSetting = await prisma.appSetting.upsert({
+     *   create: {
+     *     // ... data to create a AppSetting
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AppSetting we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AppSettingUpsertArgs>(args: SelectSubset<T, AppSettingUpsertArgs<ExtArgs>>): Prisma__AppSettingClient<$Result.GetResult<Prisma.$AppSettingPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AppSettings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppSettingCountArgs} args - Arguments to filter AppSettings to count.
+     * @example
+     * // Count the number of AppSettings
+     * const count = await prisma.appSetting.count({
+     *   where: {
+     *     // ... the filter for the AppSettings we want to count
+     *   }
+     * })
+    **/
+    count<T extends AppSettingCountArgs>(
+      args?: Subset<T, AppSettingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AppSettingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AppSetting.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppSettingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AppSettingAggregateArgs>(args: Subset<T, AppSettingAggregateArgs>): Prisma.PrismaPromise<GetAppSettingAggregateType<T>>
+
+    /**
+     * Group by AppSetting.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppSettingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AppSettingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AppSettingGroupByArgs['orderBy'] }
+        : { orderBy?: AppSettingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AppSettingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAppSettingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AppSetting model
+   */
+  readonly fields: AppSettingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AppSetting.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AppSettingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AppSetting model
+   */
+  interface AppSettingFieldRefs {
+    readonly key: FieldRef<"AppSetting", 'String'>
+    readonly value: FieldRef<"AppSetting", 'String'>
+    readonly updatedAt: FieldRef<"AppSetting", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AppSetting findUnique
+   */
+  export type AppSettingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which AppSetting to fetch.
+     */
+    where: AppSettingWhereUniqueInput
+  }
+
+  /**
+   * AppSetting findUniqueOrThrow
+   */
+  export type AppSettingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which AppSetting to fetch.
+     */
+    where: AppSettingWhereUniqueInput
+  }
+
+  /**
+   * AppSetting findFirst
+   */
+  export type AppSettingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which AppSetting to fetch.
+     */
+    where?: AppSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AppSettings to fetch.
+     */
+    orderBy?: AppSettingOrderByWithRelationInput | AppSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AppSettings.
+     */
+    cursor?: AppSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AppSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AppSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AppSettings.
+     */
+    distinct?: AppSettingScalarFieldEnum | AppSettingScalarFieldEnum[]
+  }
+
+  /**
+   * AppSetting findFirstOrThrow
+   */
+  export type AppSettingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which AppSetting to fetch.
+     */
+    where?: AppSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AppSettings to fetch.
+     */
+    orderBy?: AppSettingOrderByWithRelationInput | AppSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AppSettings.
+     */
+    cursor?: AppSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AppSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AppSettings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AppSettings.
+     */
+    distinct?: AppSettingScalarFieldEnum | AppSettingScalarFieldEnum[]
+  }
+
+  /**
+   * AppSetting findMany
+   */
+  export type AppSettingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * Filter, which AppSettings to fetch.
+     */
+    where?: AppSettingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AppSettings to fetch.
+     */
+    orderBy?: AppSettingOrderByWithRelationInput | AppSettingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AppSettings.
+     */
+    cursor?: AppSettingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AppSettings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AppSettings.
+     */
+    skip?: number
+    distinct?: AppSettingScalarFieldEnum | AppSettingScalarFieldEnum[]
+  }
+
+  /**
+   * AppSetting create
+   */
+  export type AppSettingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * The data needed to create a AppSetting.
+     */
+    data: XOR<AppSettingCreateInput, AppSettingUncheckedCreateInput>
+  }
+
+  /**
+   * AppSetting createMany
+   */
+  export type AppSettingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AppSettings.
+     */
+    data: AppSettingCreateManyInput | AppSettingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AppSetting createManyAndReturn
+   */
+  export type AppSettingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * The data used to create many AppSettings.
+     */
+    data: AppSettingCreateManyInput | AppSettingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AppSetting update
+   */
+  export type AppSettingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * The data needed to update a AppSetting.
+     */
+    data: XOR<AppSettingUpdateInput, AppSettingUncheckedUpdateInput>
+    /**
+     * Choose, which AppSetting to update.
+     */
+    where: AppSettingWhereUniqueInput
+  }
+
+  /**
+   * AppSetting updateMany
+   */
+  export type AppSettingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AppSettings.
+     */
+    data: XOR<AppSettingUpdateManyMutationInput, AppSettingUncheckedUpdateManyInput>
+    /**
+     * Filter which AppSettings to update
+     */
+    where?: AppSettingWhereInput
+    /**
+     * Limit how many AppSettings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AppSetting updateManyAndReturn
+   */
+  export type AppSettingUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * The data used to update AppSettings.
+     */
+    data: XOR<AppSettingUpdateManyMutationInput, AppSettingUncheckedUpdateManyInput>
+    /**
+     * Filter which AppSettings to update
+     */
+    where?: AppSettingWhereInput
+    /**
+     * Limit how many AppSettings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AppSetting upsert
+   */
+  export type AppSettingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * The filter to search for the AppSetting to update in case it exists.
+     */
+    where: AppSettingWhereUniqueInput
+    /**
+     * In case the AppSetting found by the `where` argument doesn't exist, create a new AppSetting with this data.
+     */
+    create: XOR<AppSettingCreateInput, AppSettingUncheckedCreateInput>
+    /**
+     * In case the AppSetting was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AppSettingUpdateInput, AppSettingUncheckedUpdateInput>
+  }
+
+  /**
+   * AppSetting delete
+   */
+  export type AppSettingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
+    /**
+     * Filter which AppSetting to delete.
+     */
+    where: AppSettingWhereUniqueInput
+  }
+
+  /**
+   * AppSetting deleteMany
+   */
+  export type AppSettingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AppSettings to delete
+     */
+    where?: AppSettingWhereInput
+    /**
+     * Limit how many AppSettings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AppSetting without action
+   */
+  export type AppSettingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppSetting
+     */
+    select?: AppSettingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppSetting
+     */
+    omit?: AppSettingOmit<ExtArgs> | null
   }
 
 
@@ -31463,6 +32557,8 @@ export namespace Prisma {
     pausedMillis: 'pausedMillis',
     pricePerMinute: 'pricePerMinute',
     totalCost: 'totalCost',
+    prepaidAmount: 'prepaidAmount',
+    prepaidMinutes: 'prepaidMinutes',
     createdAt: 'createdAt'
   };
 
@@ -31601,6 +32697,15 @@ export namespace Prisma {
   };
 
   export type ShortcutScalarFieldEnum = (typeof ShortcutScalarFieldEnum)[keyof typeof ShortcutScalarFieldEnum]
+
+
+  export const AppSettingScalarFieldEnum: {
+    key: 'key',
+    value: 'value',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AppSettingScalarFieldEnum = (typeof AppSettingScalarFieldEnum)[keyof typeof AppSettingScalarFieldEnum]
 
 
   export const AiTemplateScalarFieldEnum: {
@@ -32347,6 +33452,8 @@ export namespace Prisma {
     pausedMillis?: IntFilter<"Session"> | number
     pricePerMinute?: IntFilter<"Session"> | number
     totalCost?: IntNullableFilter<"Session"> | number | null
+    prepaidAmount?: IntNullableFilter<"Session"> | number | null
+    prepaidMinutes?: IntNullableFilter<"Session"> | number | null
     createdAt?: DateTimeFilter<"Session"> | Date | string
     computer?: XOR<ComputerScalarRelationFilter, ComputerWhereInput>
     cyberCenter?: XOR<CyberCenterNullableScalarRelationFilter, CyberCenterWhereInput> | null
@@ -32367,6 +33474,8 @@ export namespace Prisma {
     pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrderInput | SortOrder
+    prepaidAmount?: SortOrderInput | SortOrder
+    prepaidMinutes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     computer?: ComputerOrderByWithRelationInput
     cyberCenter?: CyberCenterOrderByWithRelationInput
@@ -32390,6 +33499,8 @@ export namespace Prisma {
     pausedMillis?: IntFilter<"Session"> | number
     pricePerMinute?: IntFilter<"Session"> | number
     totalCost?: IntNullableFilter<"Session"> | number | null
+    prepaidAmount?: IntNullableFilter<"Session"> | number | null
+    prepaidMinutes?: IntNullableFilter<"Session"> | number | null
     createdAt?: DateTimeFilter<"Session"> | Date | string
     computer?: XOR<ComputerScalarRelationFilter, ComputerWhereInput>
     cyberCenter?: XOR<CyberCenterNullableScalarRelationFilter, CyberCenterWhereInput> | null
@@ -32410,6 +33521,8 @@ export namespace Prisma {
     pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrderInput | SortOrder
+    prepaidAmount?: SortOrderInput | SortOrder
+    prepaidMinutes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: SessionCountOrderByAggregateInput
     _avg?: SessionAvgOrderByAggregateInput
@@ -32433,6 +33546,8 @@ export namespace Prisma {
     pausedMillis?: IntWithAggregatesFilter<"Session"> | number
     pricePerMinute?: IntWithAggregatesFilter<"Session"> | number
     totalCost?: IntNullableWithAggregatesFilter<"Session"> | number | null
+    prepaidAmount?: IntNullableWithAggregatesFilter<"Session"> | number | null
+    prepaidMinutes?: IntNullableWithAggregatesFilter<"Session"> | number | null
     createdAt?: DateTimeWithAggregatesFilter<"Session"> | Date | string
   }
 
@@ -33127,6 +34242,48 @@ export namespace Prisma {
     price?: IntNullableWithAggregatesFilter<"Shortcut"> | number | null
     isActive?: BoolWithAggregatesFilter<"Shortcut"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Shortcut"> | Date | string
+  }
+
+  export type AppSettingWhereInput = {
+    AND?: AppSettingWhereInput | AppSettingWhereInput[]
+    OR?: AppSettingWhereInput[]
+    NOT?: AppSettingWhereInput | AppSettingWhereInput[]
+    key?: StringFilter<"AppSetting"> | string
+    value?: StringFilter<"AppSetting"> | string
+    updatedAt?: DateTimeFilter<"AppSetting"> | Date | string
+  }
+
+  export type AppSettingOrderByWithRelationInput = {
+    key?: SortOrder
+    value?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AppSettingWhereUniqueInput = Prisma.AtLeast<{
+    key?: string
+    AND?: AppSettingWhereInput | AppSettingWhereInput[]
+    OR?: AppSettingWhereInput[]
+    NOT?: AppSettingWhereInput | AppSettingWhereInput[]
+    value?: StringFilter<"AppSetting"> | string
+    updatedAt?: DateTimeFilter<"AppSetting"> | Date | string
+  }, "key">
+
+  export type AppSettingOrderByWithAggregationInput = {
+    key?: SortOrder
+    value?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AppSettingCountOrderByAggregateInput
+    _max?: AppSettingMaxOrderByAggregateInput
+    _min?: AppSettingMinOrderByAggregateInput
+  }
+
+  export type AppSettingScalarWhereWithAggregatesInput = {
+    AND?: AppSettingScalarWhereWithAggregatesInput | AppSettingScalarWhereWithAggregatesInput[]
+    OR?: AppSettingScalarWhereWithAggregatesInput[]
+    NOT?: AppSettingScalarWhereWithAggregatesInput | AppSettingScalarWhereWithAggregatesInput[]
+    key?: StringWithAggregatesFilter<"AppSetting"> | string
+    value?: StringWithAggregatesFilter<"AppSetting"> | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AppSetting"> | Date | string
   }
 
   export type AiTemplateWhereInput = {
@@ -34113,6 +35270,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     computer: ComputerCreateNestedOneWithoutSessionsInput
     cyberCenter?: CyberCenterCreateNestedOneWithoutSessionsInput
@@ -34133,6 +35292,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     printJobs?: PrintJobUncheckedCreateNestedManyWithoutSessionInput
     transactions?: TransactionUncheckedCreateNestedManyWithoutSessionInput
@@ -34147,6 +35308,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     computer?: ComputerUpdateOneRequiredWithoutSessionsNestedInput
     cyberCenter?: CyberCenterUpdateOneWithoutSessionsNestedInput
@@ -34167,6 +35330,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     printJobs?: PrintJobUncheckedUpdateManyWithoutSessionNestedInput
     transactions?: TransactionUncheckedUpdateManyWithoutSessionNestedInput
@@ -34184,6 +35349,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
   }
 
@@ -34196,6 +35363,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -34211,6 +35380,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -34948,6 +36119,48 @@ export namespace Prisma {
     price?: NullableIntFieldUpdateOperationsInput | number | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AppSettingCreateInput = {
+    key: string
+    value: string
+    updatedAt?: Date | string
+  }
+
+  export type AppSettingUncheckedCreateInput = {
+    key: string
+    value: string
+    updatedAt?: Date | string
+  }
+
+  export type AppSettingUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AppSettingUncheckedUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AppSettingCreateManyInput = {
+    key: string
+    value: string
+    updatedAt?: Date | string
+  }
+
+  export type AppSettingUpdateManyMutationInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AppSettingUncheckedUpdateManyInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AiTemplateCreateInput = {
@@ -36109,6 +37322,8 @@ export namespace Prisma {
     pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrder
+    prepaidAmount?: SortOrder
+    prepaidMinutes?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -36116,6 +37331,8 @@ export namespace Prisma {
     pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrder
+    prepaidAmount?: SortOrder
+    prepaidMinutes?: SortOrder
   }
 
   export type SessionMaxOrderByAggregateInput = {
@@ -36130,6 +37347,8 @@ export namespace Prisma {
     pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrder
+    prepaidAmount?: SortOrder
+    prepaidMinutes?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -36145,6 +37364,8 @@ export namespace Prisma {
     pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrder
+    prepaidAmount?: SortOrder
+    prepaidMinutes?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -36152,6 +37373,8 @@ export namespace Prisma {
     pausedMillis?: SortOrder
     pricePerMinute?: SortOrder
     totalCost?: SortOrder
+    prepaidAmount?: SortOrder
+    prepaidMinutes?: SortOrder
   }
 
   export type EnumSessionStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -36790,6 +38013,24 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumShortcutTypeFilter<$PrismaModel>
     _max?: NestedEnumShortcutTypeFilter<$PrismaModel>
+  }
+
+  export type AppSettingCountOrderByAggregateInput = {
+    key?: SortOrder
+    value?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AppSettingMaxOrderByAggregateInput = {
+    key?: SortOrder
+    value?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AppSettingMinOrderByAggregateInput = {
+    key?: SortOrder
+    value?: SortOrder
+    updatedAt?: SortOrder
   }
   export type JsonFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -40071,6 +41312,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     computer: ComputerCreateNestedOneWithoutSessionsInput
     user?: UserCreateNestedOneWithoutSessionsInput
@@ -40089,6 +41332,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     printJobs?: PrintJobUncheckedCreateNestedManyWithoutSessionInput
     transactions?: TransactionUncheckedCreateNestedManyWithoutSessionInput
@@ -40239,6 +41484,8 @@ export namespace Prisma {
     pausedMillis?: IntFilter<"Session"> | number
     pricePerMinute?: IntFilter<"Session"> | number
     totalCost?: IntNullableFilter<"Session"> | number | null
+    prepaidAmount?: IntNullableFilter<"Session"> | number | null
+    prepaidMinutes?: IntNullableFilter<"Session"> | number | null
     createdAt?: DateTimeFilter<"Session"> | Date | string
   }
 
@@ -40308,6 +41555,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     cyberCenter?: CyberCenterCreateNestedOneWithoutSessionsInput
     user?: UserCreateNestedOneWithoutSessionsInput
@@ -40326,6 +41575,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     printJobs?: PrintJobUncheckedCreateNestedManyWithoutSessionInput
     transactions?: TransactionUncheckedCreateNestedManyWithoutSessionInput
@@ -41100,6 +42351,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     computer: ComputerCreateNestedOneWithoutSessionsInput
     cyberCenter?: CyberCenterCreateNestedOneWithoutSessionsInput
@@ -41119,6 +42372,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     transactions?: TransactionUncheckedCreateNestedManyWithoutSessionInput
   }
@@ -41228,6 +42483,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     computer?: ComputerUpdateOneRequiredWithoutSessionsNestedInput
     cyberCenter?: CyberCenterUpdateOneWithoutSessionsNestedInput
@@ -41247,6 +42504,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     transactions?: TransactionUncheckedUpdateManyWithoutSessionNestedInput
   }
@@ -42620,6 +43879,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     computer: ComputerCreateNestedOneWithoutSessionsInput
     cyberCenter?: CyberCenterCreateNestedOneWithoutSessionsInput
@@ -42639,6 +43900,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     printJobs?: PrintJobUncheckedCreateNestedManyWithoutSessionInput
   }
@@ -42912,6 +44175,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     computer?: ComputerUpdateOneRequiredWithoutSessionsNestedInput
     cyberCenter?: CyberCenterUpdateOneWithoutSessionsNestedInput
@@ -42931,6 +44196,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     printJobs?: PrintJobUncheckedUpdateManyWithoutSessionNestedInput
   }
@@ -43287,6 +44554,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     computer: ComputerCreateNestedOneWithoutSessionsInput
     cyberCenter?: CyberCenterCreateNestedOneWithoutSessionsInput
@@ -43305,6 +44574,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
     printJobs?: PrintJobUncheckedCreateNestedManyWithoutSessionInput
     transactions?: TransactionUncheckedCreateNestedManyWithoutSessionInput
@@ -44247,6 +45518,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
   }
 
@@ -44310,6 +45583,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     computer?: ComputerUpdateOneRequiredWithoutSessionsNestedInput
     user?: UserUpdateOneWithoutSessionsNestedInput
@@ -44328,6 +45603,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     printJobs?: PrintJobUncheckedUpdateManyWithoutSessionNestedInput
     transactions?: TransactionUncheckedUpdateManyWithoutSessionNestedInput
@@ -44344,6 +45621,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -44412,6 +45691,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
   }
 
@@ -44478,6 +45759,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cyberCenter?: CyberCenterUpdateOneWithoutSessionsNestedInput
     user?: UserUpdateOneWithoutSessionsNestedInput
@@ -44496,6 +45779,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     printJobs?: PrintJobUncheckedUpdateManyWithoutSessionNestedInput
     transactions?: TransactionUncheckedUpdateManyWithoutSessionNestedInput
@@ -44512,6 +45797,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -45136,6 +46423,8 @@ export namespace Prisma {
     pausedMillis?: number
     pricePerMinute: number
     totalCost?: number | null
+    prepaidAmount?: number | null
+    prepaidMinutes?: number | null
     createdAt?: Date | string
   }
 
@@ -45240,6 +46529,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     computer?: ComputerUpdateOneRequiredWithoutSessionsNestedInput
     cyberCenter?: CyberCenterUpdateOneWithoutSessionsNestedInput
@@ -45258,6 +46549,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     printJobs?: PrintJobUncheckedUpdateManyWithoutSessionNestedInput
     transactions?: TransactionUncheckedUpdateManyWithoutSessionNestedInput
@@ -45274,6 +46567,8 @@ export namespace Prisma {
     pausedMillis?: IntFieldUpdateOperationsInput | number
     pricePerMinute?: IntFieldUpdateOperationsInput | number
     totalCost?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidAmount?: NullableIntFieldUpdateOperationsInput | number | null
+    prepaidMinutes?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

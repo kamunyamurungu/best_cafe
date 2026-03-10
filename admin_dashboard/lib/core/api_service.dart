@@ -14,8 +14,15 @@ class ApiService {
   static void Function()? onUnauthorized;
 
   Future<String> get baseUrl async {
-    _baseUrl ??= await ConfigService.getServerUrl();
+    final current = await ConfigService.getServerUrl();
+    if (_baseUrl != current) {
+      _baseUrl = current;
+    }
     return _baseUrl!;
+  }
+
+  void resetBaseUrl() {
+    _baseUrl = null;
   }
 
   void setToken(String token) {
@@ -59,6 +66,14 @@ class ApiService {
     };
   }
 
+  Future<void> pingServer() async {
+    final url = await baseUrl;
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw await _mapError(response);
+    }
+  }
+
   Future<AppError> _mapError(http.Response response) async {
     if (response.statusCode == 401) {
       await clearToken();
@@ -83,6 +98,18 @@ class ApiService {
     return _throwMapped(response);
   }
 
+  Future<Map<String, dynamic>> addUserBalance(String id, int amount) async {
+    final url = await baseUrl;
+    final response = await http.post(
+      Uri.parse('$url/users/$id/balance'),
+      headers: await _headers,
+      body: json.encode({'amount': amount}),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    return _throwMapped(response);
+  }
   Future<Map<String, dynamic>> getTodayStats() async {
     final url = await baseUrl;
     final response = await http.get(
@@ -95,6 +122,27 @@ class ApiService {
     return _throwMapped(response);
   }
 
+  Future<Map<String, dynamic>> startPrepaidSession(
+    String computerId,
+    int amount, {
+    String? userId,
+  }) async {
+    final url = await baseUrl;
+    final body = <String, dynamic>{
+      'computerId': computerId,
+      'amount': amount,
+    };
+    if (userId != null) body['userId'] = userId;
+    final response = await http.post(
+      Uri.parse('$url/sessions/prepaid'),
+      headers: await _headers,
+      body: json.encode(body),
+    );
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    return _throwMapped(response);
+  }
   Future<List<dynamic>> getGovServices() async {
     final url = await baseUrl;
     try {
@@ -245,6 +293,30 @@ class ApiService {
     }
   }
 
+  Future<void> powerOffComputer(String computerId) async {
+    final url = await baseUrl;
+    final response = await http.post(
+      Uri.parse('$url/commands/power-off'),
+      headers: await _headers,
+      body: json.encode({'computerId': computerId}),
+    );
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw await _mapError(response);
+    }
+  }
+
+  Future<void> powerOffAllComputers() async {
+    final url = await baseUrl;
+    final response = await http.post(
+      Uri.parse('$url/commands/power-off-all'),
+      headers: await _headers,
+      body: json.encode({}),
+    );
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw await _mapError(response);
+    }
+  }
+
   Future<Map<String, dynamic>> createSession(String computerId) async {
     final url = await baseUrl;
     final response = await http.post(
@@ -280,6 +352,27 @@ class ApiService {
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
+    }
+    return _throwMapped(response);
+  }
+
+  Future<Map<String, dynamic>> refundPrepaidSession({
+    required String sessionId,
+    required String refundMethod,
+    String? phone,
+    String? email,
+  }) async {
+    final url = await baseUrl;
+    final body = <String, dynamic>{'refundMethod': refundMethod};
+    if (phone != null && phone.isNotEmpty) body['phone'] = phone;
+    if (email != null && email.isNotEmpty) body['email'] = email;
+    final response = await http.post(
+      Uri.parse('$url/sessions/$sessionId/refund'),
+      headers: await _headers,
+      body: json.encode(body),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body) as Map<String, dynamic>;
     }
     return _throwMapped(response);
   }
@@ -904,6 +997,38 @@ class ApiService {
   }
 
   // AI Services
+  Future<Map<String, dynamic>> getAiConfig() async {
+    final url = await baseUrl;
+    final response = await http.get(
+      Uri.parse('$url/settings/ai'),
+      headers: await _headers,
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    return _throwMapped(response);
+  }
+
+  Future<Map<String, dynamic>> setAiConfig({
+    String? provider,
+    String? apiKey,
+    String? model,
+  }) async {
+    final url = await baseUrl;
+    final response = await http.post(
+      Uri.parse('$url/settings/ai'),
+      headers: await _headers,
+      body: json.encode({
+        if (provider != null) 'provider': provider,
+        if (apiKey != null) 'apiKey': apiKey,
+        if (model != null) 'model': model,
+      }),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    }
+    return _throwMapped(response);
+  }
   Future<List<dynamic>> getAiServices({String? category}) async {
     final url = await baseUrl;
     final uri = Uri.parse('$url/ai/services').replace(
@@ -912,9 +1037,8 @@ class ApiService {
     final response = await http.get(uri, headers: await _headers);
     if (response.statusCode == 200) {
       return json.decode(response.body);
-    } else {
-      throw Exception('Failed to load AI services');
     }
+    return _throwMapped(response);
   }
 
   Future<Map<String, dynamic>> createAiService({
@@ -940,9 +1064,8 @@ class ApiService {
     );
     if (response.statusCode == 201 || response.statusCode == 200) {
       return json.decode(response.body);
-    } else {
-      throw Exception('Failed to create AI service');
     }
+    return _throwMapped(response);
   }
 
   Future<Map<String, dynamic>> updateAiService({
@@ -969,9 +1092,8 @@ class ApiService {
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
-    } else {
-      throw Exception('Failed to update AI service');
     }
+    return _throwMapped(response);
   }
 
   Future<List<dynamic>> getAiTemplates() async {
@@ -982,11 +1104,8 @@ class ApiService {
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
-    } else {
-      throw Exception(
-        'Failed to load AI templates: ${response.statusCode} ${response.body}',
-      );
     }
+    return _throwMapped(response);
   }
 
   Future<Map<String, dynamic>> createAiTemplate({
@@ -1010,9 +1129,8 @@ class ApiService {
     );
     if (response.statusCode == 201 || response.statusCode == 200) {
       return json.decode(response.body);
-    } else {
-      throw Exception('Failed to create AI template');
     }
+    return _throwMapped(response);
   }
 
   Future<Map<String, dynamic>> updateAiTemplate({
@@ -1037,9 +1155,8 @@ class ApiService {
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
-    } else {
-      throw Exception('Failed to update AI template');
     }
+    return _throwMapped(response);
   }
 
   Future<List<dynamic>> getAiJobs() async {
@@ -1050,11 +1167,8 @@ class ApiService {
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
-    } else {
-      throw Exception(
-        'Failed to load AI jobs: ${response.statusCode} ${response.body}',
-      );
     }
+    return _throwMapped(response);
   }
 
   Future<Map<String, dynamic>> getAiJob(String id) async {
@@ -1065,9 +1179,8 @@ class ApiService {
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
-    } else {
-      throw Exception('Failed to load AI job');
     }
+    return _throwMapped(response);
   }
 
   Future<Map<String, dynamic>> createAiJob({
@@ -1075,6 +1188,8 @@ class ApiService {
     String? templateId,
     required Map<String, dynamic> inputData,
     String? createdById,
+    String? outputFormat,
+    String? previewText,
   }) async {
     final url = await baseUrl;
     final response = await http.post(
@@ -1085,13 +1200,58 @@ class ApiService {
         if (templateId != null) 'templateId': templateId,
         'inputData': inputData,
         if (createdById != null) 'createdById': createdById,
+        if (outputFormat != null) 'outputFormat': outputFormat,
+        if (previewText != null) 'previewText': previewText,
       }),
     );
     if (response.statusCode == 201 || response.statusCode == 200) {
       return json.decode(response.body);
-    } else {
-      throw Exception('Failed to create AI job');
     }
+    return _throwMapped(response);
+  }
+
+  Future<Map<String, dynamic>> previewAiJob({
+    required String templateId,
+    required Map<String, dynamic> inputData,
+  }) async {
+    final url = await baseUrl;
+    final response = await http.post(
+      Uri.parse('$url/ai/preview'),
+      headers: await _headers,
+      body: json.encode({
+        'templateId': templateId,
+        'inputData': inputData,
+      }),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    }
+    return _throwMapped(response);
+  }
+
+  Future<Map<String, dynamic>> testAiConnection() async {
+    final url = await baseUrl;
+    final response = await http.post(
+      Uri.parse('$url/ai/test'),
+      headers: await _headers,
+      body: json.encode({}),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    }
+    return _throwMapped(response);
+  }
+
+  Future<Map<String, dynamic>> getAiModels() async {
+    final url = await baseUrl;
+    final response = await http.get(
+      Uri.parse('$url/ai/models'),
+      headers: await _headers,
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    return _throwMapped(response);
   }
 
   Future<List<dynamic>> getRecords({String? type}) async {

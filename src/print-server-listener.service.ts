@@ -31,34 +31,46 @@ export class PrintServerListenerService implements OnModuleInit {
     if (this.processing) return;
     this.processing = true;
     try {
-      const host = (process.env.PRINT_SERVER_HOST ?? 'localhost').trim();
-      const jobs = await this.fetchPrintJobs(host);
-      if (jobs.length == 0) return;
+      const hostsRaw = (process.env.PRINT_SERVER_HOSTS ?? '').trim();
+      const singleHost = (process.env.PRINT_SERVER_HOST ?? 'localhost').trim();
+      const hosts = (hostsRaw.length > 0 ? hostsRaw.split(',') : [singleHost])
+        .map((h) => h.trim())
+        .filter((h) => h.length > 0);
 
-      const computer = await this.ensurePrintServerComputer(host);
+      for (const host of hosts) {
+        const jobs = await this.fetchPrintJobs(host);
+        if (jobs.length == 0) continue;
 
-      for (const job of jobs) {
-        const externalJobId = `${host}|${job.printerName}|${job.id}`;
-        const existing = await this.prisma.printJob.findFirst({
-          where: { externalJobId } as any,
-        });
-        if (existing) continue;
+        const computer = await this.ensurePrintServerComputer(host);
 
-        const pages = job.totalPages > 0 ? job.totalPages : job.pagesPrinted > 0 ? job.pagesPrinted : 1;
+        for (const job of jobs) {
+          const externalJobId = `${host}|${job.printerName}|${job.id}`;
+          const existing = await this.prisma.printJob.findFirst({
+            where: { externalJobId } as any,
+          });
+          if (existing) continue;
 
-        await this.prisma.printJob.create({
-          data: {
-            computerId: computer.id,
-            externalJobId,
-            spoolJobId: job.id,
-            printerName: job.printerName,
-            pages,
-            isColor: false,
-            paperSize: 'UNKNOWN',
-            status: PrintJobStatus.PENDING,
-            source: PrintJobSource.PRINT_SERVER,
-          } as any,
-        });
+          const pages =
+            job.totalPages > 0
+              ? job.totalPages
+              : job.pagesPrinted > 0
+              ? job.pagesPrinted
+              : 1;
+
+          await this.prisma.printJob.create({
+            data: {
+              computerId: computer.id,
+              externalJobId,
+              spoolJobId: job.id,
+              printerName: job.printerName,
+              pages,
+              isColor: false,
+              paperSize: 'UNKNOWN',
+              status: PrintJobStatus.PENDING,
+              source: PrintJobSource.PRINT_SERVER,
+            } as any,
+          });
+        }
       }
     } catch (error) {
       this.logger.error('Print server poll failed', error as Error);

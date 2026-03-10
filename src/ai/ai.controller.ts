@@ -3,6 +3,7 @@ import { AiService } from './ai.service';
 import { CreateAiTemplateDto } from './dto/create-ai-template.dto';
 import { UpdateAiTemplateDto } from './dto/update-ai-template.dto';
 import { CreateAiJobDto } from './dto/create-ai-job.dto';
+import { CreateAiPreviewDto } from './dto/create-ai-preview.dto';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 
@@ -53,5 +54,20 @@ export class AiController {
   @Post('jobs')
   async createJob(@Body() body: CreateAiJobDto) {
     return this.aiService.createJob(body);
+  }
+
+  @Post('preview')
+  async preview(@Body() body: CreateAiPreviewDto) {
+    return this.aiService.previewJob(body);
+  }
+
+  @Post('test')
+  async testConnection() {
+    return this.aiService.testConnection();
+  }
+
+  @Get('models')
+  async listModels() {
+    return this.aiService.listModels();
   }
 }

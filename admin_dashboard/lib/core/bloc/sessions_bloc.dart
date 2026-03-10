@@ -54,6 +54,8 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
           status: status ?? s.status,
           pricePerMinute: s.pricePerMinute,
           totalCost: totalCost is num ? totalCost.toInt() : s.totalCost,
+          refundApplied: s.refundApplied,
+          refundAmount: s.refundAmount,
         );
       }
       return s;
@@ -69,6 +71,8 @@ class SessionsBloc extends Bloc<SessionsEvent, SessionsState> {
           endedAt: status == 'ENDED' ? DateTime.now() : null,
           pricePerMinute: 0,
           totalCost: totalCost is num ? totalCost.toInt() : null,
+          refundApplied: false,
+          refundAmount: null,
         ),
       );
     }

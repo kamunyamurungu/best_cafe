@@ -242,6 +242,67 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           );
         },
       ),
+      ListTile(
+        title: const Text('Test AI Connection'),
+        subtitle: const Text('Verify the AI provider is reachable'),
+        trailing: ElevatedButton(
+          onPressed: () async {
+            try {
+              final result = await _api.testAiConnection();
+              final output = result['outputText']?.toString() ?? 'OK';
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('AI test OK: $output')),
+              );
+            } catch (error) {
+              if (context.mounted) {
+                ErrorHandler.show(context, error);
+              }
+            }
+          },
+          child: const Text('TEST'),
+        ),
+      ),
+      ListTile(
+        title: const Text('List Available Models'),
+        subtitle: const Text('Show models your API key can use'),
+        trailing: ElevatedButton(
+          onPressed: () async {
+            try {
+              final result = await _api.getAiModels();
+              final models = (result['models'] as List<dynamic>? ?? [])
+                  .map((e) => e.toString())
+                  .toList();
+              if (!context.mounted) return;
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Available Gemini Models'),
+                  content: SizedBox(
+                    width: 420,
+                    child: models.isEmpty
+                        ? const Text('No models returned.')
+                        : SingleChildScrollView(
+                            child: Text(models.join('\n')),
+                          ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
+              );
+            } catch (error) {
+              if (context.mounted) {
+                ErrorHandler.show(context, error);
+              }
+            }
+          },
+          child: const Text('LIST'),
+        ),
+      ),
     ]);
   }
 
@@ -1041,17 +1102,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              await ConfigService.setServerUrl(controller.text);
-              if (context.mounted) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Server URL updated. Restart the app to apply changes.',
-                    ),
-                  ),
-                );
-              }
+              await ConfigService.setServerUrl(controller.text.trim());
+              _api.resetBaseUrl();
+              if (!context.mounted) return;
+              Navigator.of(context).pop();
+              setState(() {});
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Server URL updated.')),
+              );
             },
             child: const Text('Save'),
           ),
@@ -1065,7 +1123,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final apiKeyController = TextEditingController(
       text: await ConfigService.getAiApiKey(),
     );
+    final modelController = TextEditingController();
     String selectedProvider = currentProvider;
+    bool serverHasKey = false;
+
+    try {
+      final serverConfig = await _api.getAiConfig();
+      final serverProvider = serverConfig['provider']?.toString();
+      final serverModel = serverConfig['model']?.toString();
+      if ((selectedProvider.isEmpty || selectedProvider == 'CHATGPT') &&
+          serverProvider != null &&
+          serverProvider.isNotEmpty) {
+        selectedProvider = serverProvider;
+      }
+      if (serverModel != null && serverModel.isNotEmpty) {
+        modelController.text = serverModel;
+      }
+      serverHasKey = serverConfig['hasApiKey'] == true;
+    } catch (_) {}
 
     showDialog(
       context: context,
@@ -1093,6 +1168,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 decoration: const InputDecoration(labelText: 'API Key'),
                 obscureText: true,
               ),
+              TextField(
+                controller: modelController,
+                decoration: const InputDecoration(
+                  labelText: 'Model (e.g. gemini-1.5-flash-latest)',
+                ),
+              ),
+              if (serverHasKey && apiKeyController.text.trim().isEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(
+                    'A key is already saved on the server. Leave this blank to keep it.',
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ),
             ],
           ),
           actions: [
@@ -1102,8 +1191,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
+                final apiKey = apiKeyController.text.trim();
+                try {
+                  final normalizedModel = modelController.text
+                      .trim()
+                      .toLowerCase()
+                      .replaceAll(RegExp(r'\s+'), '-');
+                  await _api.setAiConfig(
+                    provider: selectedProvider,
+                    apiKey: apiKey.isEmpty ? null : apiKey,
+                    model: normalizedModel.isEmpty ? null : normalizedModel,
+                  );
+                } catch (error) {
+                  if (context.mounted) {
+                    ErrorHandler.show(context, error);
+                  }
+                  return;
+                }
+
                 await ConfigService.setAiProvider(selectedProvider);
-                await ConfigService.setAiApiKey(apiKeyController.text.trim());
+                if (apiKey.isNotEmpty) {
+                  await ConfigService.setAiApiKey(apiKey);
+                }
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(

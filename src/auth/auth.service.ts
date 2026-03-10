@@ -124,7 +124,41 @@ export class AuthService {
   }
 
   async topUp(userId: string, amount: number) {
-    const user = await this.prisma.user.update({
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { studentProfile: true },
+    });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (user.role === UserRole.STUDENT) {
+      const updated = await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          studentProfile: {
+            upsert: {
+              create: {
+                admissionNo: user.studentProfile?.admissionNo ?? undefined,
+                discountRate: user.studentProfile?.discountRate ?? null,
+                balance: amount,
+              },
+              update: {
+                balance: { increment: amount },
+              },
+            },
+          },
+        },
+        include: { studentProfile: true },
+      });
+      return {
+        id: updated.id,
+        email: updated.email,
+        balance: updated.studentProfile?.balance ?? 0,
+      };
+    }
+
+    const updated = await this.prisma.user.update({
       where: { id: userId },
       data: {
         balance: {
@@ -134,9 +168,9 @@ export class AuthService {
     });
 
     return {
-      id: user.id,
-      email: user.email,
-      balance: user.balance,
+      id: updated.id,
+      email: updated.email,
+      balance: updated.balance,
     };
   }
 }

@@ -1,4 +1,11 @@
-import { Injectable, ConflictException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  Inject,
+  forwardRef,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { SocketsGateway } from './sockets.gateway';
 import { SessionStatus, UserRole, UserStatus } from './generated/prisma';
@@ -144,7 +151,141 @@ export class SessionsService {
     return updatedSession;
   }
 
-  async endSession(sessionId: string, actorId?: string) {
+  async startPrepaidSession(
+    computerId: string,
+    amount: number,
+    userId?: string,
+    actorId?: string,
+  ) {
+    if (!amount || amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    const computer = await this.prisma.computer.findUnique({
+      where: { id: computerId },
+      include: { sessions: { where: { status: SessionStatus.ACTIVE } } },
+    });
+
+    if (!computer) {
+      throw new NotFoundException('Computer not found');
+    }
+
+    if (computer.status !== 'AVAILABLE') {
+      throw new ConflictException('Computer is not available');
+    }
+
+    if (computer.sessions.length > 0) {
+      throw new ConflictException('Computer already has an active session');
+    }
+
+    if (userId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      if (user.status !== UserStatus.ACTIVE) {
+        throw new ConflictException('User is suspended');
+      }
+    }
+
+    const pricing = await this.prisma.pricing.findFirst({
+      where: { active: true },
+    });
+
+    if (!pricing) {
+      throw new ConflictException('No active pricing found');
+    }
+
+    if (amount < pricing.pricePerMinute) {
+      throw new BadRequestException('Amount is below the minimum session cost');
+    }
+
+    if (amount % pricing.pricePerMinute !== 0) {
+      throw new BadRequestException('Amount must be in whole-minute increments');
+    }
+
+    const prepaidMinutes = Math.floor(amount / pricing.pricePerMinute);
+
+    const session = await this.prisma.session.create({
+      data: {
+        computerId,
+        userId,
+        status: SessionStatus.ACTIVE,
+        startedAt: new Date(),
+        pricePerMinute: pricing.pricePerMinute,
+        prepaidAmount: amount,
+        prepaidMinutes,
+      },
+    });
+
+    await this.prisma.computer.update({
+      where: { id: computerId },
+      data: { status: 'IN_USE' },
+    });
+    await this.socketsGateway.emitToAdmins('computer_status_changed', {
+      computerId,
+      status: 'IN_USE',
+    });
+
+    await this.prisma.transaction.create({
+      data: {
+        type: TransactionType.TIME,
+        referenceId: session.id,
+        computerId: session.computerId,
+        sessionId: session.id,
+        customerId: session.userId ?? undefined,
+        createdById: actorId,
+        description: `Prepaid session: ${prepaidMinutes} minute(s)`,
+        amount,
+        status: TransactionStatus.PAID,
+      },
+    });
+
+    await this.prisma.event.create({
+      data: {
+        type: 'SESSION_STARTED',
+        computerId,
+        userId,
+        payload: { sessionId: session.id, prepaidMinutes, prepaidAmount: amount },
+      },
+    });
+
+    await this.prisma.event.create({
+      data: {
+        type: 'SESSION_ACTIVATED',
+        computerId,
+        userId,
+        payload: { sessionId: session.id },
+      },
+    });
+
+    if (actorId) {
+      await this.auditService.logAction(actorId, 'SESSION_PREPAID_STARTED', 'Session', session.id);
+    }
+
+    await this.socketsGateway.emitToAdmins('session_updated', {
+      sessionId: session.id,
+      computerId,
+      status: 'ACTIVE',
+      startedAt: session.startedAt,
+      pricePerMinute: session.pricePerMinute,
+    });
+
+    await this.socketsGateway.unlockComputer(computerId, {
+      session,
+    });
+
+    return session;
+  }
+
+  async endSession(
+    sessionId: string,
+    actorId?: string,
+    refundMethod?: 'CASH' | 'CREDIT',
+    phone?: string,
+  ) {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
       include: { computer: true, user: { include: { studentProfile: true } } },
@@ -162,13 +303,28 @@ export class SessionsService {
     const baseMs = endedAt.getTime() - (session.startedAt?.getTime() || endedAt.getTime());
     const pausedMs = session.pausedMillis || 0;
     const durationMs = Math.max(0, baseMs - pausedMs);
-    const durationMinutes = Math.ceil(durationMs / 60000); // Round up to nearest minute
-    const totalCost = durationMinutes * session.pricePerMinute;
+    let durationMinutes = Math.ceil(durationMs / 60000); // Round up to nearest minute
+    let totalCost = durationMinutes * session.pricePerMinute;
 
     let discountedCost = totalCost;
     let payableAmount = totalCost;
+    let refundDue = 0;
+    let refundApplied = false;
 
-    if (session.user && session.user.role === UserRole.STUDENT) {
+    if (session.prepaidMinutes != null) {
+      const capMinutes = Math.max(0, session.prepaidMinutes);
+      durationMinutes = Math.min(durationMinutes, capMinutes);
+      totalCost = durationMinutes * session.pricePerMinute;
+      discountedCost = totalCost;
+      payableAmount = 0;
+      const prepaidAmount = session.prepaidAmount ?? capMinutes * session.pricePerMinute;
+      refundDue = Math.max(0, prepaidAmount - totalCost);
+
+      if (refundDue > 0 && refundMethod) {
+        await this.applyRefund(refundMethod, refundDue, phone, undefined, actorId, session.id);
+        refundApplied = true;
+      }
+    } else if (session.user && session.user.role === UserRole.STUDENT) {
       const profile = session.user.studentProfile;
       const discountRate = profile?.discountRate ?? 0;
       discountedCost = Math.max(0, Math.ceil(totalCost * (1 - discountRate)));
@@ -179,6 +335,19 @@ export class SessionsService {
       if (profile && deduct > 0) {
         await this.prisma.studentProfile.update({
           where: { userId: session.userId! },
+          data: {
+            balance: { decrement: deduct },
+          },
+        });
+      }
+    } else if (session.user && (session.user.role === UserRole.CUSTOMER || session.user.role === UserRole.USER)) {
+      const balance = session.user.balance ?? 0;
+      const deduct = Math.min(balance, totalCost);
+      payableAmount = totalCost - deduct;
+
+      if (deduct > 0) {
+        await this.prisma.user.update({
+          where: { id: session.userId! },
           data: {
             balance: { decrement: deduct },
           },
@@ -203,7 +372,7 @@ export class SessionsService {
       },
     });
 
-    if (!existingTransaction) {
+    if (!existingTransaction && session.prepaidMinutes == null) {
       const amount = session.user?.role === UserRole.STUDENT ? payableAmount : totalCost;
       if (amount > 0) {
         await this.prisma.transaction.create({
@@ -267,7 +436,165 @@ export class SessionsService {
     // Send LOCK command to PC
     await this.socketsGateway.lockComputer(session.computerId);
 
-    return { updatedSession, totalCost: discountedCost, payableAmount };
+    return {
+      updatedSession,
+      totalCost: discountedCost,
+      payableAmount,
+      refundDue,
+      refundApplied,
+    };
+  }
+
+  async refundPrepaidSession(
+    sessionId: string,
+    refundMethod: 'CASH' | 'CREDIT',
+    phone: string | undefined,
+    email: string | undefined,
+    actorId?: string,
+  ) {
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: { user: { include: { studentProfile: true } } },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    if (session.prepaidMinutes == null) {
+      throw new BadRequestException('Session is not prepaid');
+    }
+
+    if (!session.endedAt || !session.startedAt) {
+      throw new BadRequestException('Session must be ended before refund');
+    }
+
+    const durationMs = Math.max(
+      0,
+      session.endedAt.getTime() - session.startedAt.getTime() - (session.pausedMillis || 0),
+    );
+    const durationMinutes = Math.ceil(durationMs / 60000);
+    const capMinutes = Math.max(0, session.prepaidMinutes);
+    const usedMinutes = Math.min(durationMinutes, capMinutes);
+    const usedCost = usedMinutes * session.pricePerMinute;
+    const prepaidAmount = session.prepaidAmount ?? capMinutes * session.pricePerMinute;
+    const refundDue = Math.max(0, prepaidAmount - usedCost);
+
+    if (refundDue <= 0) {
+      throw new BadRequestException('No refund due for this session');
+    }
+
+    const existingRefund = await this.getRefundTransaction(sessionId);
+    if (existingRefund) {
+      throw new ConflictException('Refund already applied for this session');
+    }
+
+    await this.applyRefund(refundMethod, refundDue, phone, email, actorId, session.id);
+
+    return { sessionId, refundDue, refundApplied: true };
+  }
+
+  private async getRefundTransaction(sessionId: string) {
+    return this.prisma.transaction.findFirst({
+      where: {
+        sessionId,
+        type: TransactionType.TIME,
+        status: TransactionStatus.PAID,
+        amount: { lt: 0 },
+        description: { startsWith: 'Prepaid refund' },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  private withRefundInfo(session: {
+    transactions?: { amount: number }[];
+  }) {
+    const refundTx = session.transactions?.[0];
+    const { transactions, ...rest } = session as Record<string, unknown>;
+    return {
+      ...rest,
+      refundApplied: Boolean(refundTx),
+      refundAmount: refundTx ? Math.abs(refundTx.amount) : null,
+    };
+  }
+
+  private async applyRefund(
+    refundMethod: 'CASH' | 'CREDIT',
+    amount: number,
+    phone: string | undefined,
+    email: string | undefined,
+    actorId: string | undefined,
+    sessionId: string,
+  ) {
+    if (refundMethod === 'CREDIT') {
+      if (!phone && !email) {
+        throw new BadRequestException('Phone or email is required for credit refunds');
+      }
+      const orFilters = [
+        ...(phone ? [{ phone }] : []),
+        ...(email ? [{ email }] : []),
+      ];
+      const user = await this.prisma.user.findFirst({
+        where: { OR: orFilters },
+        include: { studentProfile: true },
+      });
+      if (!user) {
+        throw new NotFoundException('User not found for the provided phone or email');
+      }
+      const identifier = phone ?? email ?? 'unknown';
+
+      if (user.role === UserRole.STUDENT) {
+        await this.prisma.studentProfile.upsert({
+          where: { userId: user.id },
+          create: {
+            userId: user.id,
+            balance: amount,
+            admissionNo: user.studentProfile?.admissionNo ?? undefined,
+            discountRate: user.studentProfile?.discountRate ?? null,
+          },
+          update: {
+            balance: { increment: amount },
+          },
+        });
+      } else {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            balance: { increment: amount },
+          },
+        });
+      }
+
+      await this.prisma.transaction.create({
+        data: {
+          type: TransactionType.TIME,
+          referenceId: sessionId,
+          sessionId,
+          customerId: user.id,
+          createdById: actorId,
+          description: `Prepaid refund credited to ${identifier}`,
+          amount: -amount,
+          status: TransactionStatus.PAID,
+        },
+      });
+    } else {
+      await this.prisma.transaction.create({
+        data: {
+          type: TransactionType.TIME,
+          referenceId: sessionId,
+          sessionId,
+          createdById: actorId,
+          description: 'Prepaid refund issued (cash)',
+          amount: -amount,
+          status: TransactionStatus.PAID,
+        },
+      });
+    }
+
+    if (actorId) {
+      await this.auditService.logAction(actorId, 'SESSION_PREPAID_REFUND', 'Session', sessionId);
+    }
   }
 
   async getActiveSession(computerId: string) {
@@ -300,22 +627,45 @@ export class SessionsService {
 
   // New: get single session by id (includes timestamps and totals)
   async getSessionById(sessionId: string) {
-    return this.prisma.session.findUnique({
+    const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
       include: {
         computer: true,
         user: true,
+        transactions: {
+          where: {
+            type: TransactionType.TIME,
+            status: TransactionStatus.PAID,
+            amount: { lt: 0 },
+            description: { startsWith: 'Prepaid refund' },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
       },
     });
+    if (!session) return session;
+    return this.withRefundInfo(session);
   }
 
   async getAllSessions() {
-    return this.prisma.session.findMany({
+    const sessions = await this.prisma.session.findMany({
       include: {
         computer: true,
+        transactions: {
+          where: {
+            type: TransactionType.TIME,
+            status: TransactionStatus.PAID,
+            amount: { lt: 0 },
+            description: { startsWith: 'Prepaid refund' },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
+    return sessions.map((session) => this.withRefundInfo(session));
   }
 
   async getActiveSessions() {

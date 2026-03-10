@@ -7,6 +7,7 @@ class ComputerCard extends StatefulWidget {
   final VoidCallback onStart;
   final VoidCallback onUnlock;
   final VoidCallback onStop;
+  final VoidCallback onPowerOff;
 
   const ComputerCard({
     super.key,
@@ -14,6 +15,7 @@ class ComputerCard extends StatefulWidget {
     required this.onStart,
     required this.onUnlock,
     required this.onStop,
+    required this.onPowerOff,
   });
 
   @override
@@ -82,15 +84,28 @@ class _ComputerCardState extends State<ComputerCard> {
                 Text('Last Session: KES ${widget.computer.lastEndedCost}', style: const TextStyle(fontSize: 10)),
             ],
             const SizedBox(height: 4),
-            ElevatedButton(
-              onPressed: _getButtonAction(isActiveUI),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _getButtonColor(isActiveUI),
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                textStyle: const TextStyle(fontSize: 10),
-                minimumSize: const Size(0, 24),
-              ),
-              child: Text(_getButtonText(isActiveUI)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: _getButtonAction(isActiveUI),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _getButtonColor(isActiveUI),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    textStyle: const TextStyle(fontSize: 10),
+                    minimumSize: const Size(0, 24),
+                  ),
+                  child: Text(_getButtonText(isActiveUI)),
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  icon: const Icon(Icons.power_settings_new),
+                  color: Colors.red.shade400,
+                  iconSize: 16,
+                  tooltip: 'Power off',
+                  onPressed: widget.onPowerOff,
+                ),
+              ],
             ),
           ],
         ),

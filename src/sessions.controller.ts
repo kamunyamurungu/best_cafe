@@ -44,6 +44,21 @@ export class SessionsController {
     return this.sessionsService.createSession(body.computerId, body.userId, req.user.id);
   }
 
+  @Post('prepaid')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
+  async startPrepaidSession(
+    @Body() body: { computerId: string; amount: number; userId?: string },
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.sessionsService.startPrepaidSession(
+      body.computerId,
+      body.amount,
+      body.userId,
+      req.user.id,
+    );
+  }
+
   @Patch(':id/start')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.STAFF)
@@ -58,9 +73,41 @@ export class SessionsController {
   @Patch(':id/end')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.STAFF)
-  async endSession(@Param('id') sessionId: string, @Req() req: { user: { id: string } }) {
-    const result = await this.sessionsService.endSession(sessionId, req.user.id);
-    return { updatedSession: result.updatedSession, totalCost: result.totalCost, payableAmount: result.payableAmount };
+  async endSession(
+    @Param('id') sessionId: string,
+    @Body() body: { refundMethod?: 'CASH' | 'CREDIT'; phone?: string } = {},
+    @Req() req: { user: { id: string } },
+  ) {
+    const result = await this.sessionsService.endSession(
+      sessionId,
+      req.user.id,
+      body.refundMethod,
+      body.phone,
+    );
+    return {
+      updatedSession: result.updatedSession,
+      totalCost: result.totalCost,
+      payableAmount: result.payableAmount,
+      refundDue: result.refundDue,
+      refundApplied: result.refundApplied,
+    };
+  }
+
+  @Post(':id/refund')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.STAFF)
+  async refundPrepaidSession(
+    @Param('id') sessionId: string,
+    @Body() body: { refundMethod: 'CASH' | 'CREDIT'; phone?: string; email?: string },
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.sessionsService.refundPrepaidSession(
+      sessionId,
+      body.refundMethod,
+      body.phone,
+      body.email,
+      req.user.id,
+    );
   }
 
   @Patch(':id/pause')

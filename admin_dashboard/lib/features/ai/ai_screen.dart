@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_service.dart';
 import '../../core/ui/error_handler.dart';
 import '../../core/ui/error_view.dart';
@@ -19,15 +21,23 @@ class _AiScreenState extends State<AiScreen>
   late Future<List<dynamic>> _jobs;
   late Future<List<dynamic>> _records;
 
+  void _handleTabChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(_handleTabChanged);
     _reload();
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChanged);
     _tabController.dispose();
     super.dispose();
   }
@@ -213,7 +223,7 @@ class _AiScreenState extends State<AiScreen>
                 controller: schemaController,
                 decoration: const InputDecoration(
                   labelText: 'Schema (key:type per line)',
-                  helperText: 'Example:\nfullName:string\njobTitle:string',
+                  helperText: 'Example:\nfullName:string\njobTitle:string\ncertifications:string?',
                 ),
                 maxLines: 6,
               ),
@@ -336,6 +346,10 @@ class _AiScreenState extends State<AiScreen>
         selectedTemplate['userPromptSchema'] ?? {},
       );
     }
+    String outputFormat =
+        selectedTemplate?['outputFormat']?.toString() ?? 'TEXT';
+    String? previewText;
+    bool previewLoading = false;
 
     await showDialog(
       context: context,
@@ -373,6 +387,10 @@ class _AiScreenState extends State<AiScreen>
                               selectedTemplate!['userPromptSchema'] ?? {},
                             )
                           : {};
+                      outputFormat =
+                          selectedTemplate?['outputFormat']?.toString() ??
+                              'TEXT';
+                      previewText = null;
                       inputControllers.clear();
                     });
                   },
@@ -400,10 +418,30 @@ class _AiScreenState extends State<AiScreen>
                               selectedTemplate!['userPromptSchema'] ?? {},
                             )
                           : {};
+                      outputFormat =
+                          selectedTemplate?['outputFormat']?.toString() ??
+                              'TEXT';
+                      previewText = null;
                       inputControllers.clear();
                     });
                   },
                   decoration: const InputDecoration(labelText: 'Template'),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: outputFormat,
+                  items: const [
+                    DropdownMenuItem(value: 'TEXT', child: Text('Text')),
+                    DropdownMenuItem(value: 'DOCX', child: Text('DOCX')),
+                    DropdownMenuItem(value: 'PDF', child: Text('PDF')),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => outputFormat = value);
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Output Format',
+                  ),
                 ),
                 const SizedBox(height: 8),
                 ...schema.keys.map((key) {
@@ -413,6 +451,29 @@ class _AiScreenState extends State<AiScreen>
                     decoration: InputDecoration(labelText: key),
                   );
                 }).toList(),
+                const SizedBox(height: 12),
+                if (previewLoading)
+                  const Center(child: CircularProgressIndicator())
+                else if (previewText != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Preview',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(previewText ?? ''),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -420,6 +481,38 @@ class _AiScreenState extends State<AiScreen>
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
+            ),
+            OutlinedButton(
+              onPressed: previewLoading
+                  ? null
+                  : () async {
+                      if (templateId == null) return;
+                      final inputData = <String, dynamic>{};
+                      for (final entry in inputControllers.entries) {
+                        inputData[entry.key] = entry.value.text.trim();
+                      }
+                      setState(() {
+                        previewLoading = true;
+                        previewText = null;
+                      });
+                      try {
+                        final preview = await _api.previewAiJob(
+                          templateId: templateId!,
+                          inputData: inputData,
+                        );
+                        setState(() {
+                          previewText = preview['outputText']?.toString();
+                        });
+                      } catch (e) {
+                        if (!mounted) return;
+                        ErrorHandler.show(context, e);
+                      } finally {
+                        if (mounted) {
+                          setState(() => previewLoading = false);
+                        }
+                      }
+                    },
+              child: const Text('Preview'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -433,6 +526,8 @@ class _AiScreenState extends State<AiScreen>
                     serviceId: serviceId!,
                     templateId: templateId,
                     inputData: inputData,
+                    outputFormat: outputFormat,
+                    previewText: previewText,
                   );
                   if (!mounted) return;
                   Navigator.of(context).pop();
@@ -485,6 +580,20 @@ class _AiScreenState extends State<AiScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _openFilePath(String filePath) async {
+    if (filePath.trim().isEmpty) return;
+    final uri = Uri.file(filePath);
+    final canLaunch = await canLaunchUrl(uri);
+    if (!canLaunch) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open file.')),
+      );
+      return;
+    }
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -634,7 +743,7 @@ class _AiScreenState extends State<AiScreen>
                 title: Text('Job ${job['id']}'),
                 subtitle: Text('Status: ${job['status']}'),
                 trailing: IconButton(
-                  icon: const Icon(Icons.visibility),
+                  icon: const Icon(Icons.preview_outlined),
                   onPressed: () => _showJobDetails(job),
                 ),
               ),
@@ -669,6 +778,34 @@ class _AiScreenState extends State<AiScreen>
               child: ListTile(
                 title: Text(record['title']?.toString() ?? 'Record'),
                 subtitle: Text('File: ${record['filePath'] ?? ''}'),
+                trailing: Wrap(
+                  spacing: 8,
+                  children: [
+                    IconButton(
+                      tooltip: 'Copy file path',
+                      icon: const Icon(Icons.copy),
+                      onPressed: () async {
+                        final path = record['filePath']?.toString() ?? '';
+                        if (path.isEmpty) return;
+                        await Clipboard.setData(
+                          ClipboardData(text: path),
+                        );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Path copied.')),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      tooltip: 'Open file',
+                      icon: const Icon(Icons.open_in_new),
+                      onPressed: () async {
+                        final path = record['filePath']?.toString() ?? '';
+                        await _openFilePath(path);
+                      },
+                    ),
+                  ],
+                ),
               ),
             );
           },

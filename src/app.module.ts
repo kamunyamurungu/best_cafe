@@ -35,9 +35,17 @@ import { ShortcutsModule } from './shortcuts/shortcuts.module';
 import { AuditService } from './audit/audit.service';
 import { UsersService } from './users/users.service';
 import { ComputerSessionsController } from './computer-sessions/computer-sessions.controller';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), AuthModule, AiModule, GovServicesModule, ShortcutsModule],
+  imports: [
+    ScheduleModule.forRoot(),
+    AuthModule,
+    AiModule,
+    GovServicesModule,
+    ShortcutsModule,
+    SettingsModule,
+  ],
   controllers: [
     AppController,
     SessionsController,

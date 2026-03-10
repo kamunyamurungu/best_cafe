@@ -14,8 +14,11 @@ class ComputersBloc extends Bloc<ComputersEvent, ComputersState> {
     on<ComputerPendingCommandSet>(_onPendingCommand);
     on<ComputerLastEndedCostSet>(_onLastEndedCost);
     on<ComputerStartRequested>(_onStartRequested);
+    on<ComputerPrepaidStartRequested>(_onPrepaidStartRequested);
     on<ComputerUnlockRequested>(_onUnlockRequested);
     on<ComputerStopRequested>(_onStopRequested);
+    on<ComputerPowerOffRequested>(_onPowerOffRequested);
+    on<ComputersPowerOffAllRequested>(_onPowerOffAllRequested);
     on<ComputerClearUiState>(_onClearUiState);
     on<ComputerActiveSessionSet>(_onActiveSessionSet);
     on<ComputerUnlockCommandReceived>(_onUnlockCommandReceived);
@@ -253,6 +256,55 @@ class ComputersBloc extends Bloc<ComputersEvent, ComputersState> {
     } catch (_) {}
   }
 
+  Future<void> _onPrepaidStartRequested(
+    ComputerPrepaidStartRequested event,
+    Emitter<ComputersState> emit,
+  ) async {
+    try {
+      await api.startPrepaidSession(event.id, event.amount);
+      final freshSessions = await api.getSessions();
+      final active = freshSessions.firstWhere(
+        (s) => s['computerId'] == event.id && s['status'] == 'ACTIVE',
+        orElse: () => null,
+      );
+      final s = state;
+      if (s is ComputersLoaded) {
+        final updated = s.items.map((c) {
+          if (c.id != event.id) return c;
+          final activeList = <Session>[];
+          if (active != null) {
+            activeList.add(Session(
+              id: active['id']?.toString() ?? '${event.id}-active',
+              computerId: event.id,
+              startedAt: active['startedAt'] != null
+                  ? DateTime.tryParse(active['startedAt'].toString())
+                  : DateTime.now(),
+              endedAt: null,
+              status: 'ACTIVE',
+              pricePerMinute: active['pricePerMinute'] is num
+                  ? (active['pricePerMinute'] as num).toInt()
+                  : 0,
+              totalCost: null,
+            ));
+          }
+          return Computer(
+            id: c.id,
+            name: c.name,
+            deviceToken: c.deviceToken,
+            status: 'IN_USE',
+            lastSeenAt: c.lastSeenAt,
+            activeSessions: activeList,
+            lastEndedCost: c.lastEndedCost,
+            pendingCommand: c.pendingCommand,
+            localStartedAt: null,
+            uiState: null,
+          );
+        }).toList();
+        emit(ComputersLoaded(updated));
+      }
+    } catch (_) {}
+  }
+
   Future<void> _onUnlockRequested(ComputerUnlockRequested event, Emitter<ComputersState> emit) async {
     try {
       final sessions = await api.getSessions();
@@ -333,6 +385,61 @@ class ComputersBloc extends Bloc<ComputersEvent, ComputersState> {
             activeSessions: const <Session>[],
             lastEndedCost: c.lastEndedCost,
             pendingCommand: c.pendingCommand,
+            localStartedAt: null,
+            uiState: null,
+          );
+        }).toList();
+        emit(ComputersLoaded(updated));
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _onPowerOffRequested(
+    ComputerPowerOffRequested event,
+    Emitter<ComputersState> emit,
+  ) async {
+    try {
+      await api.powerOffComputer(event.id);
+      final s = state;
+      if (s is ComputersLoaded) {
+        final updated = s.items.map((c) {
+          if (c.id != event.id) return c;
+          return Computer(
+            id: c.id,
+            name: c.name,
+            deviceToken: c.deviceToken,
+            status: c.status,
+            lastSeenAt: c.lastSeenAt,
+            activeSessions: c.activeSessions,
+            lastEndedCost: c.lastEndedCost,
+            pendingCommand: 'POWER_OFF',
+            localStartedAt: null,
+            uiState: null,
+          );
+        }).toList();
+        emit(ComputersLoaded(updated));
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _onPowerOffAllRequested(
+    ComputersPowerOffAllRequested event,
+    Emitter<ComputersState> emit,
+  ) async {
+    try {
+      await api.powerOffAllComputers();
+      final s = state;
+      if (s is ComputersLoaded) {
+        final updated = s.items.map((c) {
+          return Computer(
+            id: c.id,
+            name: c.name,
+            deviceToken: c.deviceToken,
+            status: c.status,
+            lastSeenAt: c.lastSeenAt,
+            activeSessions: c.activeSessions,
+            lastEndedCost: c.lastEndedCost,
+            pendingCommand: 'POWER_OFF',
             localStartedAt: null,
             uiState: null,
           );

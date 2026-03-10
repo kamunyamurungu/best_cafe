@@ -12,6 +12,7 @@ class BillingScreen extends StatefulWidget {
 class _BillingScreenState extends State<BillingScreen> {
   final ApiService _api = ApiService();
   late Future<List<dynamic>> _pendingTransactions;
+  late Future<List<dynamic>> _paidTimeTransactions;
   late Future<List<dynamic>> _receipts;
   late Future<Map<String, dynamic>> _dailyTotals;
   final Set<String> _selected = <String>{};
@@ -25,6 +26,7 @@ class _BillingScreenState extends State<BillingScreen> {
 
   void _reload() {
     _pendingTransactions = _api.getTransactions(status: 'PENDING');
+    _paidTimeTransactions = _api.getTransactions(status: 'PAID', type: 'TIME');
     _receipts = _api.getReceipts();
     _dailyTotals = _api.getDailyTotals();
     setState(() {});
@@ -191,6 +193,47 @@ class _BillingScreenState extends State<BillingScreen> {
                   child: const Text('Issue Receipt'),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Prepaid Sessions (Paid)',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 200,
+              child: FutureBuilder<List<dynamic>>(
+                future: _paidTimeTransactions,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return ErrorView(error: snapshot.error!);
+                  }
+                  final items = (snapshot.data ?? [])
+                      .where((t) =>
+                          (t['description'] ?? '')
+                              .toString()
+                              .startsWith('Prepaid session'))
+                      .toList();
+                  if (items.isEmpty) {
+                    return const Center(
+                      child: Text('No prepaid session transactions.'),
+                    );
+                  }
+                  return ListView.builder(
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final t = items[index] as Map<String, dynamic>;
+                      return ListTile(
+                        title: Text(t['description'] ?? 'Prepaid session'),
+                        subtitle: Text('Amount: KES ${t['amount']}'),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 16),
             const Text(

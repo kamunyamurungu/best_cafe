@@ -56,6 +56,7 @@ export class PrismaService implements OnModuleInit {
   get govService() { return this.prisma.govService; }
   get govServiceUsage() { return this.prisma.govServiceUsage; }
   get shortcut() { return this.prisma.shortcut; }
+  get appSetting() { return this.prisma.appSetting; }
   get event() { return this.prisma.event; }
   get command() { return this.prisma.command; }
 }

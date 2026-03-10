@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { PrismaClient } from './generated/prisma';
 
-type CommandType = 'LOCK' | 'UNLOCK';
+type CommandType = 'LOCK' | 'UNLOCK' | 'POWER_OFF';
 
 @Injectable()
 export class CommandsService {
@@ -38,6 +38,38 @@ export class CommandsService {
     });
 
     return command;
+  }
+
+  async createCommandsForAll(type: CommandType) {
+    const computers = await this.prisma.computer.findMany({
+      select: { id: true },
+    });
+    const commands = await Promise.all(
+      computers.map((computer) =>
+        this.prisma.command.create({
+          data: {
+            computerId: computer.id,
+            type,
+            status: 'PENDING',
+            createdAt: new Date(),
+          },
+        }),
+      ),
+    );
+
+    await Promise.all(
+      commands.map((command) =>
+        this.prisma.event.create({
+          data: {
+            type: 'COMMAND_CREATED',
+            computerId: command.computerId,
+            payload: { commandId: command.id, commandType: command.type },
+          },
+        }),
+      ),
+    );
+
+    return commands;
   }
 
   async getPendingCommands(computerId: string) {

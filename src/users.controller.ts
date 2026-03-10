@@ -84,6 +84,17 @@ export class UsersController {
     return this.usersService.updateUser(id, body, req.user.id);
   }
 
+  @Post(':id/balance')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async addBalance(
+    @Param('id') id: string,
+    @Body() body: { amount: number },
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.usersService.addBalance(id, body.amount, req.user.id);
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)

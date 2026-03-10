@@ -156,6 +156,8 @@ exports.Prisma.SessionScalarFieldEnum = {
   pausedMillis: 'pausedMillis',
   pricePerMinute: 'pricePerMinute',
   totalCost: 'totalCost',
+  prepaidAmount: 'prepaidAmount',
+  prepaidMinutes: 'prepaidMinutes',
   createdAt: 'createdAt'
 };
 
@@ -261,6 +263,12 @@ exports.Prisma.ShortcutScalarFieldEnum = {
   price: 'price',
   isActive: 'isActive',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.AppSettingScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.AiTemplateScalarFieldEnum = {
@@ -542,6 +550,7 @@ exports.Prisma.ModelName = {
   GovService: 'GovService',
   GovServiceUsage: 'GovServiceUsage',
   Shortcut: 'Shortcut',
+  AppSetting: 'AppSetting',
   AiTemplate: 'AiTemplate',
   AiJob: 'AiJob',
   Record: 'Record',

@@ -1,13 +1,30 @@
 import { Controller, Post, Body, Param, Get } from '@nestjs/common';
 import { CommandsService } from './commands.service';
+import { SocketsGateway } from './sockets.gateway';
 
 @Controller('commands')
 export class CommandsController {
-  constructor(private readonly commandsService: CommandsService) {}
+  constructor(
+    private readonly commandsService: CommandsService,
+    private readonly socketsGateway: SocketsGateway,
+  ) {}
 
   @Post()
   async createCommand(@Body() body: { computerId: string; type: string }) {
-    return this.commandsService.createCommand(body.computerId, body.type as 'LOCK' | 'UNLOCK');
+    return this.commandsService.createCommand(
+      body.computerId,
+      body.type as 'LOCK' | 'UNLOCK' | 'POWER_OFF',
+    );
+  }
+
+  @Post('power-off')
+  async powerOffComputer(@Body() body: { computerId: string }) {
+    return this.socketsGateway.powerOffComputer(body.computerId);
+  }
+
+  @Post('power-off-all')
+  async powerOffAllComputers() {
+    return this.socketsGateway.powerOffAllComputers();
   }
 
   @Post('admin-unlock')

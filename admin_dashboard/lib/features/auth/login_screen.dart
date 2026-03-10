@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/api_service.dart';
+import '../../core/config_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final void Function() onLoggedIn;
@@ -84,6 +85,42 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _showEditServerUrlDialog() async {
+    final controller = TextEditingController(
+      text: await ConfigService.getServerUrl(),
+    );
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Server URL'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Server URL'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await ConfigService.setServerUrl(controller.text.trim());
+              _api.resetBaseUrl();
+              if (!mounted) return;
+              Navigator.of(dialogContext).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Server URL updated.')),
+              );
+              setState(() {});
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -111,6 +148,50 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text(
                     'Admin Login',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  FutureBuilder<String>(
+                    future: ConfigService.getServerUrl(),
+                    builder: (context, snapshot) {
+                      final url = snapshot.data ?? 'Loading...';
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Server: $url',
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _showEditServerUrlDialog,
+                            child: const Text('Edit'),
+                          ),
+                          OutlinedButton(
+                            onPressed: () async {
+                              try {
+                                await _api.pingServer();
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Server connection OK.'),
+                                  ),
+                                );
+                              } catch (error) {
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Server test failed: $error'),
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text('Test'),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   TextField(

@@ -207,12 +207,13 @@ export class ComputersService {
   }
 
   async checkOfflineComputers() {
-    const thirtySecondsAgo = new Date(Date.now() - 30000); // 30 seconds
+    const graceMs = 120000; // 2 minutes
+    const graceAgo = new Date(Date.now() - graceMs);
 
     const offlineComputers = await this.prisma.computer.findMany({
       where: {
         lastSeenAt: {
-          lt: thirtySecondsAgo,
+          lt: graceAgo,
         },
         status: {
           not: ComputerStatus.OFFLINE,

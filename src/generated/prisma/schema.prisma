@@ -73,6 +73,8 @@ model Session {
 
   pricePerMinute Int
   totalCost      Int?
+  prepaidAmount  Int?
+  prepaidMinutes Int?
 
   createdAt DateTime @default(now())
 
@@ -203,6 +205,12 @@ model Shortcut {
   price     Int?
   isActive  Boolean      @default(true)
   createdAt DateTime     @default(now())
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
 
 model AiTemplate {

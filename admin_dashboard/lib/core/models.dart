@@ -119,6 +119,10 @@ class Session {
   final String status;
   final int pricePerMinute;
   final int? totalCost;
+  final int? prepaidAmount;
+  final int? prepaidMinutes;
+  final bool? refundApplied;
+  final int? refundAmount;
 
   Session({
     required this.id,
@@ -128,6 +132,10 @@ class Session {
     required this.status,
     required this.pricePerMinute,
     this.totalCost,
+    this.prepaidAmount,
+    this.prepaidMinutes,
+    this.refundApplied,
+    this.refundAmount,
   });
 
   factory Session.fromJson(Map<String, dynamic> json) {
@@ -141,6 +149,10 @@ class Session {
       status: json['status'] ?? 'UNKNOWN',
       pricePerMinute: json['pricePerMinute'] ?? 0,
       totalCost: json['totalCost'],
+      prepaidAmount: json['prepaidAmount'],
+      prepaidMinutes: json['prepaidMinutes'],
+      refundApplied: json['refundApplied'],
+      refundAmount: json['refundAmount'],
     );
   }
 

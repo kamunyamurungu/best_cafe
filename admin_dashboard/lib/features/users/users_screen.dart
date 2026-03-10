@@ -262,6 +262,69 @@ class _UsersScreenState extends State<UsersScreen> {
     );
   }
 
+  Future<void> _showBalanceDialog(Map<String, dynamic> user) async {
+    final amountController = TextEditingController();
+    final role = (user['role'] ?? '').toString();
+    final studentProfile = user['studentProfile'] as Map<String, dynamic>?;
+    final currentBalance = role == 'STUDENT'
+        ? (studentProfile?['balance'] ?? 0)
+        : (user['balance'] ?? 0);
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Balance'),
+        content: SizedBox(
+          width: 360,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Current balance: $currentBalance'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: amountController,
+                decoration: const InputDecoration(
+                  labelText: 'Amount to add',
+                  hintText: 'KES',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final amount = int.tryParse(amountController.text.trim());
+              if (amount == null || amount <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Enter a valid amount.')),
+                );
+                return;
+              }
+              try {
+                await _api.addUserBalance(user['id'], amount);
+                if (!context.mounted) return;
+                Navigator.of(context).pop();
+                _reload();
+              } catch (error) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Top up failed: $error')),
+                );
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<Map<String, dynamic>> _filterUsers(List<dynamic> users) {
     if (_query.isEmpty) return users.cast<Map<String, dynamic>>();
     return users.cast<Map<String, dynamic>>().where((user) {
@@ -320,11 +383,14 @@ class _UsersScreenState extends State<UsersScreen> {
                       final user = items[index];
                       final studentProfile =
                           user['studentProfile'] as Map<String, dynamic>?;
+                      final role = (user['role'] ?? '').toString();
                       final subtitle = [
                         if (user['email'] != null) user['email'],
                         if (user['phone'] != null) user['phone'],
                         'Role: ${user['role']}',
                         'Status: ${user['status']}',
+                        if (role != 'STUDENT')
+                          'Balance: ${user['balance'] ?? 0}',
                         if (studentProfile != null)
                           'Student balance: ${studentProfile['balance']} • Discount: ${studentProfile['discountRate'] ?? 0}',
                       ].join(' | ');
@@ -335,6 +401,10 @@ class _UsersScreenState extends State<UsersScreen> {
                           trailing: Wrap(
                             spacing: 8,
                             children: [
+                              IconButton(
+                                icon: const Icon(Icons.account_balance_wallet),
+                                onPressed: () => _showBalanceDialog(user),
+                              ),
                               IconButton(
                                 icon: const Icon(Icons.edit),
                                 onPressed: () => _showEditDialog(user),

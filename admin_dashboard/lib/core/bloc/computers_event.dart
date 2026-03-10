@@ -41,6 +41,14 @@ class ComputerStartRequested extends ComputersEvent {
   List<Object?> get props => [id];
 }
 
+class ComputerPrepaidStartRequested extends ComputersEvent {
+  final String id;
+  final int amount;
+  const ComputerPrepaidStartRequested(this.id, this.amount);
+  @override
+  List<Object?> get props => [id, amount];
+}
+
 class ComputerUnlockRequested extends ComputersEvent {
   final String id;
   const ComputerUnlockRequested(this.id);
@@ -53,6 +61,17 @@ class ComputerStopRequested extends ComputersEvent {
   const ComputerStopRequested(this.id);
   @override
   List<Object?> get props => [id];
+}
+
+class ComputerPowerOffRequested extends ComputersEvent {
+  final String id;
+  const ComputerPowerOffRequested(this.id);
+  @override
+  List<Object?> get props => [id];
+}
+
+class ComputersPowerOffAllRequested extends ComputersEvent {
+  const ComputersPowerOffAllRequested();
 }
 
 class ComputerClearUiState extends ComputersEvent {
