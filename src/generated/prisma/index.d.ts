@@ -20732,6 +20732,8 @@ export namespace Prisma {
     name: string | null
     systemPrompt: string | null
     outputFormat: $Enums.AiOutputFormat | null
+    htmlTemplatePath: string | null
+    primaryColor: string | null
     version: number | null
     isActive: boolean | null
     createdAt: Date | null
@@ -20742,6 +20744,8 @@ export namespace Prisma {
     name: string | null
     systemPrompt: string | null
     outputFormat: $Enums.AiOutputFormat | null
+    htmlTemplatePath: string | null
+    primaryColor: string | null
     version: number | null
     isActive: boolean | null
     createdAt: Date | null
@@ -20753,6 +20757,8 @@ export namespace Prisma {
     systemPrompt: number
     userPromptSchema: number
     outputFormat: number
+    htmlTemplatePath: number
+    primaryColor: number
     version: number
     isActive: number
     createdAt: number
@@ -20773,6 +20779,8 @@ export namespace Prisma {
     name?: true
     systemPrompt?: true
     outputFormat?: true
+    htmlTemplatePath?: true
+    primaryColor?: true
     version?: true
     isActive?: true
     createdAt?: true
@@ -20783,6 +20791,8 @@ export namespace Prisma {
     name?: true
     systemPrompt?: true
     outputFormat?: true
+    htmlTemplatePath?: true
+    primaryColor?: true
     version?: true
     isActive?: true
     createdAt?: true
@@ -20794,6 +20804,8 @@ export namespace Prisma {
     systemPrompt?: true
     userPromptSchema?: true
     outputFormat?: true
+    htmlTemplatePath?: true
+    primaryColor?: true
     version?: true
     isActive?: true
     createdAt?: true
@@ -20892,6 +20904,8 @@ export namespace Prisma {
     systemPrompt: string
     userPromptSchema: JsonValue
     outputFormat: $Enums.AiOutputFormat
+    htmlTemplatePath: string | null
+    primaryColor: string | null
     version: number
     isActive: boolean
     createdAt: Date
@@ -20922,6 +20936,8 @@ export namespace Prisma {
     systemPrompt?: boolean
     userPromptSchema?: boolean
     outputFormat?: boolean
+    htmlTemplatePath?: boolean
+    primaryColor?: boolean
     version?: boolean
     isActive?: boolean
     createdAt?: boolean
@@ -20936,6 +20952,8 @@ export namespace Prisma {
     systemPrompt?: boolean
     userPromptSchema?: boolean
     outputFormat?: boolean
+    htmlTemplatePath?: boolean
+    primaryColor?: boolean
     version?: boolean
     isActive?: boolean
     createdAt?: boolean
@@ -20947,6 +20965,8 @@ export namespace Prisma {
     systemPrompt?: boolean
     userPromptSchema?: boolean
     outputFormat?: boolean
+    htmlTemplatePath?: boolean
+    primaryColor?: boolean
     version?: boolean
     isActive?: boolean
     createdAt?: boolean
@@ -20958,12 +20978,14 @@ export namespace Prisma {
     systemPrompt?: boolean
     userPromptSchema?: boolean
     outputFormat?: boolean
+    htmlTemplatePath?: boolean
+    primaryColor?: boolean
     version?: boolean
     isActive?: boolean
     createdAt?: boolean
   }
 
-  export type AiTemplateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "systemPrompt" | "userPromptSchema" | "outputFormat" | "version" | "isActive" | "createdAt", ExtArgs["result"]["aiTemplate"]>
+  export type AiTemplateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "systemPrompt" | "userPromptSchema" | "outputFormat" | "htmlTemplatePath" | "primaryColor" | "version" | "isActive" | "createdAt", ExtArgs["result"]["aiTemplate"]>
   export type AiTemplateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     services?: boolean | AiTemplate$servicesArgs<ExtArgs>
     jobs?: boolean | AiTemplate$jobsArgs<ExtArgs>
@@ -20984,6 +21006,8 @@ export namespace Prisma {
       systemPrompt: string
       userPromptSchema: Prisma.JsonValue
       outputFormat: $Enums.AiOutputFormat
+      htmlTemplatePath: string | null
+      primaryColor: string | null
       version: number
       isActive: boolean
       createdAt: Date
@@ -21417,6 +21441,8 @@ export namespace Prisma {
     readonly systemPrompt: FieldRef<"AiTemplate", 'String'>
     readonly userPromptSchema: FieldRef<"AiTemplate", 'Json'>
     readonly outputFormat: FieldRef<"AiTemplate", 'AiOutputFormat'>
+    readonly htmlTemplatePath: FieldRef<"AiTemplate", 'String'>
+    readonly primaryColor: FieldRef<"AiTemplate", 'String'>
     readonly version: FieldRef<"AiTemplate", 'Int'>
     readonly isActive: FieldRef<"AiTemplate", 'Boolean'>
     readonly createdAt: FieldRef<"AiTemplate", 'DateTime'>
@@ -32714,6 +32740,8 @@ export namespace Prisma {
     systemPrompt: 'systemPrompt',
     userPromptSchema: 'userPromptSchema',
     outputFormat: 'outputFormat',
+    htmlTemplatePath: 'htmlTemplatePath',
+    primaryColor: 'primaryColor',
     version: 'version',
     isActive: 'isActive',
     createdAt: 'createdAt'
@@ -34295,6 +34323,8 @@ export namespace Prisma {
     systemPrompt?: StringFilter<"AiTemplate"> | string
     userPromptSchema?: JsonFilter<"AiTemplate">
     outputFormat?: EnumAiOutputFormatFilter<"AiTemplate"> | $Enums.AiOutputFormat
+    htmlTemplatePath?: StringNullableFilter<"AiTemplate"> | string | null
+    primaryColor?: StringNullableFilter<"AiTemplate"> | string | null
     version?: IntFilter<"AiTemplate"> | number
     isActive?: BoolFilter<"AiTemplate"> | boolean
     createdAt?: DateTimeFilter<"AiTemplate"> | Date | string
@@ -34308,6 +34338,8 @@ export namespace Prisma {
     systemPrompt?: SortOrder
     userPromptSchema?: SortOrder
     outputFormat?: SortOrder
+    htmlTemplatePath?: SortOrderInput | SortOrder
+    primaryColor?: SortOrderInput | SortOrder
     version?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -34324,6 +34356,8 @@ export namespace Prisma {
     systemPrompt?: StringFilter<"AiTemplate"> | string
     userPromptSchema?: JsonFilter<"AiTemplate">
     outputFormat?: EnumAiOutputFormatFilter<"AiTemplate"> | $Enums.AiOutputFormat
+    htmlTemplatePath?: StringNullableFilter<"AiTemplate"> | string | null
+    primaryColor?: StringNullableFilter<"AiTemplate"> | string | null
     version?: IntFilter<"AiTemplate"> | number
     isActive?: BoolFilter<"AiTemplate"> | boolean
     createdAt?: DateTimeFilter<"AiTemplate"> | Date | string
@@ -34337,6 +34371,8 @@ export namespace Prisma {
     systemPrompt?: SortOrder
     userPromptSchema?: SortOrder
     outputFormat?: SortOrder
+    htmlTemplatePath?: SortOrderInput | SortOrder
+    primaryColor?: SortOrderInput | SortOrder
     version?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -34356,6 +34392,8 @@ export namespace Prisma {
     systemPrompt?: StringWithAggregatesFilter<"AiTemplate"> | string
     userPromptSchema?: JsonWithAggregatesFilter<"AiTemplate">
     outputFormat?: EnumAiOutputFormatWithAggregatesFilter<"AiTemplate"> | $Enums.AiOutputFormat
+    htmlTemplatePath?: StringNullableWithAggregatesFilter<"AiTemplate"> | string | null
+    primaryColor?: StringNullableWithAggregatesFilter<"AiTemplate"> | string | null
     version?: IntWithAggregatesFilter<"AiTemplate"> | number
     isActive?: BoolWithAggregatesFilter<"AiTemplate"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"AiTemplate"> | Date | string
@@ -36169,6 +36207,8 @@ export namespace Prisma {
     systemPrompt: string
     userPromptSchema: JsonNullValueInput | InputJsonValue
     outputFormat: $Enums.AiOutputFormat
+    htmlTemplatePath?: string | null
+    primaryColor?: string | null
     version?: number
     isActive?: boolean
     createdAt?: Date | string
@@ -36182,6 +36222,8 @@ export namespace Prisma {
     systemPrompt: string
     userPromptSchema: JsonNullValueInput | InputJsonValue
     outputFormat: $Enums.AiOutputFormat
+    htmlTemplatePath?: string | null
+    primaryColor?: string | null
     version?: number
     isActive?: boolean
     createdAt?: Date | string
@@ -36195,6 +36237,8 @@ export namespace Prisma {
     systemPrompt?: StringFieldUpdateOperationsInput | string
     userPromptSchema?: JsonNullValueInput | InputJsonValue
     outputFormat?: EnumAiOutputFormatFieldUpdateOperationsInput | $Enums.AiOutputFormat
+    htmlTemplatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
     version?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36208,6 +36252,8 @@ export namespace Prisma {
     systemPrompt?: StringFieldUpdateOperationsInput | string
     userPromptSchema?: JsonNullValueInput | InputJsonValue
     outputFormat?: EnumAiOutputFormatFieldUpdateOperationsInput | $Enums.AiOutputFormat
+    htmlTemplatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
     version?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36221,6 +36267,8 @@ export namespace Prisma {
     systemPrompt: string
     userPromptSchema: JsonNullValueInput | InputJsonValue
     outputFormat: $Enums.AiOutputFormat
+    htmlTemplatePath?: string | null
+    primaryColor?: string | null
     version?: number
     isActive?: boolean
     createdAt?: Date | string
@@ -36232,6 +36280,8 @@ export namespace Prisma {
     systemPrompt?: StringFieldUpdateOperationsInput | string
     userPromptSchema?: JsonNullValueInput | InputJsonValue
     outputFormat?: EnumAiOutputFormatFieldUpdateOperationsInput | $Enums.AiOutputFormat
+    htmlTemplatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
     version?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36243,6 +36293,8 @@ export namespace Prisma {
     systemPrompt?: StringFieldUpdateOperationsInput | string
     userPromptSchema?: JsonNullValueInput | InputJsonValue
     outputFormat?: EnumAiOutputFormatFieldUpdateOperationsInput | $Enums.AiOutputFormat
+    htmlTemplatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
     version?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -38079,6 +38131,8 @@ export namespace Prisma {
     systemPrompt?: SortOrder
     userPromptSchema?: SortOrder
     outputFormat?: SortOrder
+    htmlTemplatePath?: SortOrder
+    primaryColor?: SortOrder
     version?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -38093,6 +38147,8 @@ export namespace Prisma {
     name?: SortOrder
     systemPrompt?: SortOrder
     outputFormat?: SortOrder
+    htmlTemplatePath?: SortOrder
+    primaryColor?: SortOrder
     version?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -38103,6 +38159,8 @@ export namespace Prisma {
     name?: SortOrder
     systemPrompt?: SortOrder
     outputFormat?: SortOrder
+    htmlTemplatePath?: SortOrder
+    primaryColor?: SortOrder
     version?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
@@ -42756,6 +42814,8 @@ export namespace Prisma {
     systemPrompt: string
     userPromptSchema: JsonNullValueInput | InputJsonValue
     outputFormat: $Enums.AiOutputFormat
+    htmlTemplatePath?: string | null
+    primaryColor?: string | null
     version?: number
     isActive?: boolean
     createdAt?: Date | string
@@ -42768,6 +42828,8 @@ export namespace Prisma {
     systemPrompt: string
     userPromptSchema: JsonNullValueInput | InputJsonValue
     outputFormat: $Enums.AiOutputFormat
+    htmlTemplatePath?: string | null
+    primaryColor?: string | null
     version?: number
     isActive?: boolean
     createdAt?: Date | string
@@ -42832,6 +42894,8 @@ export namespace Prisma {
     systemPrompt?: StringFieldUpdateOperationsInput | string
     userPromptSchema?: JsonNullValueInput | InputJsonValue
     outputFormat?: EnumAiOutputFormatFieldUpdateOperationsInput | $Enums.AiOutputFormat
+    htmlTemplatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
     version?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -42844,6 +42908,8 @@ export namespace Prisma {
     systemPrompt?: StringFieldUpdateOperationsInput | string
     userPromptSchema?: JsonNullValueInput | InputJsonValue
     outputFormat?: EnumAiOutputFormatFieldUpdateOperationsInput | $Enums.AiOutputFormat
+    htmlTemplatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
     version?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -43336,6 +43402,8 @@ export namespace Prisma {
     systemPrompt: string
     userPromptSchema: JsonNullValueInput | InputJsonValue
     outputFormat: $Enums.AiOutputFormat
+    htmlTemplatePath?: string | null
+    primaryColor?: string | null
     version?: number
     isActive?: boolean
     createdAt?: Date | string
@@ -43348,6 +43416,8 @@ export namespace Prisma {
     systemPrompt: string
     userPromptSchema: JsonNullValueInput | InputJsonValue
     outputFormat: $Enums.AiOutputFormat
+    htmlTemplatePath?: string | null
+    primaryColor?: string | null
     version?: number
     isActive?: boolean
     createdAt?: Date | string
@@ -43481,6 +43551,8 @@ export namespace Prisma {
     systemPrompt?: StringFieldUpdateOperationsInput | string
     userPromptSchema?: JsonNullValueInput | InputJsonValue
     outputFormat?: EnumAiOutputFormatFieldUpdateOperationsInput | $Enums.AiOutputFormat
+    htmlTemplatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
     version?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -43493,6 +43565,8 @@ export namespace Prisma {
     systemPrompt?: StringFieldUpdateOperationsInput | string
     userPromptSchema?: JsonNullValueInput | InputJsonValue
     outputFormat?: EnumAiOutputFormatFieldUpdateOperationsInput | $Enums.AiOutputFormat
+    htmlTemplatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    primaryColor?: NullableStringFieldUpdateOperationsInput | string | null
     version?: IntFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

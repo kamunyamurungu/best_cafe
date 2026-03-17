@@ -219,6 +219,8 @@ model AiTemplate {
   systemPrompt     String
   userPromptSchema Json
   outputFormat     AiOutputFormat
+  htmlTemplatePath String?
+  primaryColor     String?
   version          Int            @default(1)
   isActive         Boolean        @default(true)
   createdAt        DateTime       @default(now())

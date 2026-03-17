@@ -66,6 +66,13 @@ class ApiService {
     };
   }
 
+  Future<Map<String, String>> get _authHeaders async {
+    await _ensureTokenLoaded();
+    return {
+      if (_token != null) 'Authorization': 'Bearer $_token',
+    };
+  }
+
   Future<void> pingServer() async {
     final url = await baseUrl;
     final response = await http.get(Uri.parse(url));
@@ -1113,6 +1120,8 @@ class ApiService {
     required String systemPrompt,
     required Map<String, String> userPromptSchema,
     required String outputFormat,
+    String? htmlTemplatePath,
+    String? primaryColor,
     bool? isActive,
   }) async {
     final url = await baseUrl;
@@ -1124,6 +1133,8 @@ class ApiService {
         'systemPrompt': systemPrompt,
         'userPromptSchema': userPromptSchema,
         'outputFormat': outputFormat,
+        if (htmlTemplatePath != null) 'htmlTemplatePath': htmlTemplatePath,
+        if (primaryColor != null) 'primaryColor': primaryColor,
         'isActive': isActive,
       }),
     );
@@ -1139,6 +1150,8 @@ class ApiService {
     String? systemPrompt,
     Map<String, String>? userPromptSchema,
     String? outputFormat,
+    String? htmlTemplatePath,
+    String? primaryColor,
     bool? isActive,
   }) async {
     final url = await baseUrl;
@@ -1150,6 +1163,8 @@ class ApiService {
         if (systemPrompt != null) 'systemPrompt': systemPrompt,
         if (userPromptSchema != null) 'userPromptSchema': userPromptSchema,
         if (outputFormat != null) 'outputFormat': outputFormat,
+        if (htmlTemplatePath != null) 'htmlTemplatePath': htmlTemplatePath,
+        if (primaryColor != null) 'primaryColor': primaryColor,
         if (isActive != null) 'isActive': isActive,
       }),
     );
@@ -1221,6 +1236,65 @@ class ApiService {
       body: json.encode({
         'templateId': templateId,
         'inputData': inputData,
+      }),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    }
+    return _throwMapped(response);
+  }
+
+  Future<Map<String, dynamic>> previewAiTemplatePdf({
+    required String templateId,
+    required Map<String, dynamic> inputData,
+    String? outputText,
+  }) async {
+    final url = await baseUrl;
+    final response = await http.post(
+      Uri.parse('$url/ai/templates/$templateId/preview-pdf'),
+      headers: await _headers,
+      body: json.encode({
+        'inputData': inputData,
+        if (outputText != null) 'outputText': outputText,
+      }),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    }
+    return _throwMapped(response);
+  }
+
+  Future<Map<String, dynamic>> uploadAiTemplateHtml({
+    required String templateId,
+    required String filePath,
+  }) async {
+    final url = await baseUrl;
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$url/ai/templates/$templateId/upload-html'),
+    );
+    request.headers.addAll(await _authHeaders);
+    request.files.add(await http.MultipartFile.fromPath('file', filePath));
+
+    final response = await http.Response.fromStream(await request.send());
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    }
+    return _throwMapped(response);
+  }
+
+  Future<Map<String, dynamic>> saveAiTemplateHtml({
+    required String templateId,
+    required String html,
+    String? fileName,
+  }) async {
+    final url = await baseUrl;
+    final response = await http.post(
+      Uri.parse('$url/ai/templates/$templateId/save-html'),
+      headers: await _headers,
+      body: json.encode({
+        'html': html,
+        if (fileName != null) 'fileName': fileName,
       }),
     );
     if (response.statusCode == 200 || response.statusCode == 201) {

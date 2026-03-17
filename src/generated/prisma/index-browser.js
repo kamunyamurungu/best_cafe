@@ -277,6 +277,8 @@ exports.Prisma.AiTemplateScalarFieldEnum = {
   systemPrompt: 'systemPrompt',
   userPromptSchema: 'userPromptSchema',
   outputFormat: 'outputFormat',
+  htmlTemplatePath: 'htmlTemplatePath',
+  primaryColor: 'primaryColor',
   version: 'version',
   isActive: 'isActive',
   createdAt: 'createdAt'

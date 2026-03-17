@@ -5,6 +5,8 @@ export class CreateAiTemplateDto {
   systemPrompt: string;
   userPromptSchema: Record<string, string>;
   outputFormat: AiOutputFormat;
+  htmlTemplatePath?: string;
+  primaryColor?: string;
   version?: number;
   isActive?: boolean;
 }

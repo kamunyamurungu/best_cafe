@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -192,6 +193,13 @@ class _AiScreenState extends State<AiScreen>
     final systemPromptController = TextEditingController(
       text: template?['systemPrompt']?.toString() ?? '',
     );
+    final htmlTemplatePathController = TextEditingController(
+      text: template?['htmlTemplatePath']?.toString() ?? '',
+    );
+    final primaryColorController = TextEditingController(
+      text: template?['primaryColor']?.toString() ?? '',
+    );
+    final htmlContentController = TextEditingController();
     final schemaController = TextEditingController(
       text: template?['userPromptSchema'] != null
           ? (template!['userPromptSchema'] as Map).entries
@@ -227,6 +235,96 @@ class _AiScreenState extends State<AiScreen>
                 ),
                 maxLines: 6,
               ),
+              TextField(
+                controller: htmlTemplatePathController,
+                decoration: const InputDecoration(
+                  labelText: 'HTML Template Path',
+                  helperText: 'Relative to data/templates/ai (e.g., basic-report.html)',
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: template == null
+                      ? null
+                      : () async {
+                          final result = await FilePicker.platform.pickFiles(
+                            type: FileType.custom,
+                            allowedExtensions: ['html'],
+                          );
+                          if (result == null || result.files.isEmpty) return;
+                          final picked = result.files.first;
+                          final filePath = picked.path;
+                          if (filePath == null || filePath.isEmpty) return;
+
+                          try {
+                            final response = await _api.uploadAiTemplateHtml(
+                              templateId: template['id']?.toString() ?? '',
+                              filePath: filePath,
+                            );
+                            htmlTemplatePathController.text =
+                                response['htmlTemplatePath']?.toString() ?? '';
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('HTML uploaded.')),
+                            );
+                          } catch (e) {
+                            if (!mounted) return;
+                            ErrorHandler.show(context, e);
+                          }
+                        },
+                  icon: const Icon(Icons.upload_file),
+                  label: Text(template == null ? 'Save to enable upload' : 'Upload HTML'),
+                ),
+              ),
+              TextField(
+                controller: htmlContentController,
+                decoration: const InputDecoration(
+                  labelText: 'HTML Content (optional)',
+                  helperText: 'Paste HTML here and click Save HTML to write it to disk.',
+                ),
+                maxLines: 8,
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: template == null
+                      ? null
+                      : () async {
+                          final html = htmlContentController.text.trim();
+                          if (html.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('HTML content is empty.')),
+                            );
+                            return;
+                          }
+                          try {
+                            final response = await _api.saveAiTemplateHtml(
+                              templateId: template['id']?.toString() ?? '',
+                              html: html,
+                            );
+                            htmlTemplatePathController.text =
+                                response['htmlTemplatePath']?.toString() ?? '';
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('HTML saved.')),
+                            );
+                          } catch (e) {
+                            if (!mounted) return;
+                            ErrorHandler.show(context, e);
+                          }
+                        },
+                  icon: const Icon(Icons.save),
+                  label: Text(template == null ? 'Save to enable HTML' : 'Save HTML'),
+                ),
+              ),
+              TextField(
+                controller: primaryColorController,
+                decoration: const InputDecoration(
+                  labelText: 'Primary Color (optional)',
+                  helperText: 'Hex value like #0b5fff',
+                ),
+              ),
               DropdownButtonFormField<String>(
                 value: outputFormat,
                 items: const [
@@ -251,11 +349,27 @@ class _AiScreenState extends State<AiScreen>
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
+          if (template != null)
+            OutlinedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _showTemplatePdfPreviewDialog(template);
+              },
+              child: const Text('Preview PDF'),
+            ),
           ElevatedButton(
             onPressed: () async {
               final name = nameController.text.trim();
               final systemPrompt = systemPromptController.text.trim();
               final schemaText = schemaController.text.trim();
+              final htmlTemplatePath =
+                  htmlTemplatePathController.text.trim().isEmpty
+                      ? null
+                      : htmlTemplatePathController.text.trim();
+              final primaryColor =
+                  primaryColorController.text.trim().isEmpty
+                      ? null
+                      : primaryColorController.text.trim();
               if (name.isEmpty || systemPrompt.isEmpty || schemaText.isEmpty) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -276,6 +390,8 @@ class _AiScreenState extends State<AiScreen>
                     systemPrompt: systemPrompt,
                     userPromptSchema: schema,
                     outputFormat: outputFormat,
+                    htmlTemplatePath: htmlTemplatePath,
+                    primaryColor: primaryColor,
                     isActive: isActive,
                   );
                 } else {
@@ -285,6 +401,8 @@ class _AiScreenState extends State<AiScreen>
                     systemPrompt: systemPrompt,
                     userPromptSchema: schema,
                     outputFormat: outputFormat,
+                    htmlTemplatePath: htmlTemplatePath ?? '',
+                    primaryColor: primaryColor ?? '',
                     isActive: isActive,
                   );
                 }
@@ -698,23 +816,133 @@ class _AiScreenState extends State<AiScreen>
           itemCount: templates.length,
           itemBuilder: (context, index) {
             final template = templates[index] as Map<String, dynamic>;
+            final htmlTemplatePath = template['htmlTemplatePath']?.toString() ?? '';
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 title: Text(template['name']?.toString() ?? 'Template'),
                 subtitle: Text(
-                  'Format: ${template['outputFormat']} • Active: ${template['isActive'] == true ? 'Yes' : 'No'}',
+                  'Format: ${template['outputFormat']} • Active: ${template['isActive'] == true ? 'Yes' : 'No'}${htmlTemplatePath.isNotEmpty ? ' • HTML: $htmlTemplatePath' : ''}',
                 ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () =>
-                      _showCreateTemplateDialog(template: template),
+                trailing: Wrap(
+                  spacing: 4,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.preview_outlined),
+                      onPressed: () => _showTemplatePdfPreviewDialog(template),
+                      tooltip: 'Preview PDF',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.upload_file),
+                      onPressed: () => _showCreateTemplateDialog(template: template),
+                      tooltip: 'Upload HTML',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () =>
+                          _showCreateTemplateDialog(template: template),
+                    ),
+                  ],
                 ),
               ),
             );
           },
         );
       },
+    );
+  }
+
+  Future<void> _showTemplatePdfPreviewDialog(
+    Map<String, dynamic> template,
+  ) async {
+    final schema = Map<String, dynamic>.from(
+      template['userPromptSchema'] ?? {},
+    );
+    final inputControllers = <String, TextEditingController>{};
+    bool loading = false;
+    String? filePath;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Preview ${template['name'] ?? 'Template'}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (schema.isEmpty)
+                  const Text('No schema fields for this template.')
+                else
+                  ...schema.keys.map((key) {
+                    inputControllers[key] ??= TextEditingController();
+                    return TextField(
+                      controller: inputControllers[key],
+                      decoration: InputDecoration(labelText: key),
+                    );
+                  }).toList(),
+                const SizedBox(height: 12),
+                if (loading) const CircularProgressIndicator(),
+                if (!loading && filePath != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Preview ready:'),
+                      const SizedBox(height: 6),
+                      Text(filePath ?? ''),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+            if (filePath != null)
+              TextButton(
+                onPressed: () async {
+                  final path = filePath ?? '';
+                  if (path.isEmpty) return;
+                  await _openFilePath(path);
+                },
+                child: const Text('Open File'),
+              ),
+            ElevatedButton(
+              onPressed: loading
+                  ? null
+                  : () async {
+                      final inputData = <String, dynamic>{};
+                      for (final entry in inputControllers.entries) {
+                        inputData[entry.key] = entry.value.text.trim();
+                      }
+                      setState(() {
+                        loading = true;
+                        filePath = null;
+                      });
+                      try {
+                        final preview = await _api.previewAiTemplatePdf(
+                          templateId: template['id']?.toString() ?? '',
+                          inputData: inputData,
+                        );
+                        setState(() {
+                          filePath = preview['filePath']?.toString();
+                        });
+                      } catch (e) {
+                        if (!mounted) return;
+                        ErrorHandler.show(context, e);
+                      } finally {
+                        if (mounted) {
+                          setState(() => loading = false);
+                        }
+                      }
+                    },
+              child: const Text('Render PDF'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
